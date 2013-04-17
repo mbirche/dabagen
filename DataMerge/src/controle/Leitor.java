@@ -13,8 +13,7 @@ public class Leitor {
 
 	private EstruturaArquivo estrutura;
 
-	public Leitor() {
-		estrutura = new EstruturaArquivo();
+	public Leitor() {		
 	}
 
 	public EstruturaArquivo obterEstruturaArquivo(File arquivo) {
@@ -25,6 +24,7 @@ public class Leitor {
 		String[] elementosLinha;
 		List<Dimensao> dimensoes = new ArrayList<Dimensao>();
 		Dimensao dimensao;
+		estrutura = new EstruturaArquivo();
 
 		try {
 

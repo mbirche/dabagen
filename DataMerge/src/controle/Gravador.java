@@ -70,8 +70,12 @@ public class Gravador {
 				+ estrutArq2.getDimensoes().size();
 		Integer totalTuplas = estrutArq1.getNumeroTuplas();
 
-		String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
-		novoArquivo = new File(caminhoArquivo + nomeArquivo);
+		/* Criador de nomes automaticos
+		 * String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
+		 * novoArquivo = new File(caminhoArquivo + nomeArquivo);
+		 */
+		
+		novoArquivo = new File(caminhoArquivo);
 
 		numVal1 = estrutArq1.getDimensoes().size();
 		numVal2 = estrutArq2.getDimensoes().size();
@@ -245,9 +249,13 @@ public class Gravador {
 		StringBuffer novaTupla;
 		Tupla tupla;
 
-		String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
-		novoArquivo = new File(caminhoArquivo + nomeArquivo);
-
+		/* Criador de nomes automaticos
+		 * String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
+		 * novoArquivo = new File(caminhoArquivo + nomeArquivo);
+		 */
+		
+		novoArquivo = new File(caminhoArquivo);
+		
 		if (temCabecalho) {
 			novaListaDimensoes = new ArrayList<Dimensao>();
 			novaEstrutura = new EstruturaArquivo();
@@ -284,8 +292,8 @@ public class Gravador {
 
 				tupla = leitor1.obterTupla();
 				novaTupla = new StringBuffer();
-				
-				if(temIndice){
+
+				if (temIndice) {
 					novaTupla.append(indice + " ");
 					indice++;
 				}
@@ -305,11 +313,11 @@ public class Gravador {
 				tupla = leitor2.obterTupla();
 				novaTupla = new StringBuffer();
 
-				if(temIndice){
+				if (temIndice) {
 					novaTupla.append(indice + " ");
 					indice++;
 				}
-				
+
 				for (int j = 0; j < tupla.getValores().length; j++) {
 
 					if (j == tupla.getValores().length - 1)
@@ -342,6 +350,14 @@ public class Gravador {
 
 	public void setArquivo2(File arquivo2) {
 		this.arquivo2 = arquivo2;
+	}
+
+	public String getCaminhoArquivo() {
+		return caminhoArquivo;
+	}
+
+	public void setCaminhoArquivo(String caminhoArquivo) {
+		this.caminhoArquivo = caminhoArquivo;
 	}
 
 }

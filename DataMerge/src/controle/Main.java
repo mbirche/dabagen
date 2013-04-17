@@ -1,14 +1,22 @@
 package controle;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.awt.Dimension;
 
-import modelo.EstruturaArquivo;
-import modelo.Tupla;
+import javax.swing.JFrame;
+
+import visao.TelaPrincipal;
 
 public class Main {
 	public static void main(String[] args) {
 
+		TelaPrincipal tela = new TelaPrincipal();
+		
+		tela.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		tela.setTitle("Mesclador de Arquivos do Database Generator");
+		tela.setSize(new Dimension(800, 600));
+		tela.setLocationRelativeTo(null);
+		tela.setVisible(true);
+		/*
 		File data = new File(
 				"C:/Users/Marcelo/Documents/iCubing/data_generator/bin/data");
 		File data1 = new File(
@@ -54,5 +62,6 @@ public class Main {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		*/
 	}
 }
