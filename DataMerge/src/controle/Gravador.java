@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,11 +71,12 @@ public class Gravador {
 				+ estrutArq2.getDimensoes().size();
 		Integer totalTuplas = estrutArq1.getNumeroTuplas();
 
-		/* Criador de nomes automaticos
-		 * String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
-		 * novoArquivo = new File(caminhoArquivo + nomeArquivo);
+		/*
+		 * Criador de nomes automaticos String nomeArquivo = "D" +
+		 * totalDimensoes + "_T" + totalTuplas; novoArquivo = new
+		 * File(caminhoArquivo + nomeArquivo);
 		 */
-		
+
 		novoArquivo = new File(caminhoArquivo);
 
 		numVal1 = estrutArq1.getDimensoes().size();
@@ -249,13 +251,14 @@ public class Gravador {
 		StringBuffer novaTupla;
 		Tupla tupla;
 
-		/* Criador de nomes automaticos
-		 * String nomeArquivo = "D" + totalDimensoes + "_T" + totalTuplas;
-		 * novoArquivo = new File(caminhoArquivo + nomeArquivo);
+		/*
+		 * Criador de nomes automaticos String nomeArquivo = "D" +
+		 * totalDimensoes + "_T" + totalTuplas; novoArquivo = new
+		 * File(caminhoArquivo + nomeArquivo);
 		 */
-		
+
 		novoArquivo = new File(caminhoArquivo);
-		
+
 		if (temCabecalho) {
 			novaListaDimensoes = new ArrayList<Dimensao>();
 			novaEstrutura = new EstruturaArquivo();
@@ -334,6 +337,95 @@ public class Gravador {
 			e.printStackTrace();
 		}
 
+	}
+
+	/***
+	 * 
+	 * @param arquivo
+	 *            Arquivo que será editado
+	 * @param temCabecalho
+	 *            Se o novo arquivo terá sua estrutura gravada na primeira linha
+	 * @param temIndice
+	 *            Se o novo arquivo terá o índice das tuplas gravado na primeira
+	 *            coluna
+	 * @param caminho
+	 *            O caminho onde o novo arquivo será salvo, se for null irá
+	 *            salvar no mesmo diretório do arquivo de origem com o nome
+	 *            modificado para _ (caso for sem cabeçalho e sem índice) ou _c
+	 *            (caso o arquivo tenha cabeçalho mas não tenha índice) ou _i
+	 *            (caso o arquivo tenha índice mas não tenha cabeçalho) ou _c_i
+	 *            (caso o arquivo tenha cabeçalho e índice)
+	 */
+	public void editarArquivo(File arquivo, Boolean temCabecalho,
+			Boolean temIndice, String caminho) {
+
+		EstruturaArquivo estrutura;
+		StringBuffer primeiraLinha;
+		StringBuffer novaTupla;
+		Tupla tupla;
+		File novoArquivo;
+		try {
+
+			BufferedLeitor leitor = new BufferedLeitor(arquivo);
+			estrutura = leitor.getEstrutura();
+
+			if (caminho == null)
+				caminho = arquivo.getAbsolutePath();
+			if (temCabecalho)
+				caminho += "_c";
+			if (temIndice)
+				caminho += "_i";
+			if(!temCabecalho && !temIndice)
+				caminho += "_";
+
+			novoArquivo = new File(caminho);
+
+			FileWriter fw = new FileWriter(novoArquivo);
+			BufferedWriter gravador = new BufferedWriter(fw);
+
+			if (temCabecalho) {
+
+				primeiraLinha = new StringBuffer();
+
+				primeiraLinha.append(estrutura.getNumeroTuplas());
+
+				for (Dimensao dim : estrutura.getDimensoes()) {
+					primeiraLinha.append(" ");
+					primeiraLinha.append(dim.getCardinalidade());
+				}
+
+				gravador.write(primeiraLinha.toString());
+				gravador.newLine();
+			}
+			
+			Integer indice = 1;
+
+			for (int i = 0; i < estrutura.getNumeroTuplas(); i++) {
+
+				tupla = leitor.obterTupla();
+				novaTupla = new StringBuffer();
+
+				if (temIndice) {
+					novaTupla.append(indice + " ");
+					indice++;
+				}
+
+				for (int j = 0; j < tupla.getValores().length; j++) {
+
+					if (j == tupla.getValores().length - 1)
+						novaTupla.append(tupla.getValores()[j]);
+					else
+						novaTupla.append(tupla.getValores()[j] + " ");
+				}
+				gravador.write(novaTupla.toString());
+				gravador.newLine();
+			}
+			
+			gravador.close();
+
+		} catch (Exception e) {
+
+		}
 	}
 
 	public File getArquivo1() {

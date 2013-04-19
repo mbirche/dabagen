@@ -1,6 +1,8 @@
 package controle;
 
 import java.awt.Dimension;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 import javax.swing.JFrame;
 
@@ -8,6 +10,16 @@ import visao.TelaPrincipal;
 
 public class Main {
 	public static void main(String[] args) {
+		
+//		Connection conn = Conexao.getConexao();
+//		
+//		try{
+//		PreparedStatement ps = conn.prepareStatement("create table teste (id integer, nome varchar(40))");
+//		ps.execute();
+//		
+//		} catch(Exception e){
+//			
+//		}
 
 		TelaPrincipal tela = new TelaPrincipal();
 		

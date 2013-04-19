@@ -1,5 +1,6 @@
 package visao;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -33,9 +34,11 @@ public class TelaPrincipal extends JFrame {
 
 	private JLabel lblArquivo1;
 	private JLabel lblArquivo2;
+	private JLabel lblEditarArquivo;
 
 	private JTextField txtArquivo1;
 	private JTextField txtArquivo2;
+	private JTextField txtEditArquivo;
 
 	private JTextArea txtArArq1;
 	private JTextArea txtArArq2;
@@ -44,6 +47,8 @@ public class TelaPrincipal extends JFrame {
 	private JButton btnArquivo1;
 	private JButton btnArquivo2;
 	private JButton btnMesclar;
+	private JButton btnEditarArquivo;
+	private JButton btnProcurarArquivoEdit;
 
 	private ButtonGroup grupoRadios;
 	private JRadioButton rdMergeHorizontal;
@@ -52,10 +57,17 @@ public class TelaPrincipal extends JFrame {
 
 	private JCheckBox ckCabecalho;
 	private JCheckBox ckIndice;
+	private JCheckBox ckCabecalhoEdit;
+	private JCheckBox ckIndiceEdit;
+	private JCheckBox ckManterCaminhoEdit;
 
 	private LayoutManager layoutArquivos;
 	private LayoutManager layoutAviso;
 
+	private JPanel pnlTopo;
+	private JPanel pnlCentro;
+	private JPanel pnlBaixo;
+	
 	private JPanel pnlArquivos;
 	private JPanel pnlArquivo1;
 	private JPanel pnlArquivo2;
@@ -68,6 +80,7 @@ public class TelaPrincipal extends JFrame {
 
 	private File arquivo1;
 	private File arquivo2;
+	private File arquivoEdit;
 
 	private Boolean temArquivos;
 	private Boolean ePossivel;
@@ -81,10 +94,15 @@ public class TelaPrincipal extends JFrame {
 
 		lblArquivo1 = new JLabel("Arquivo 1");
 		lblArquivo2 = new JLabel("Arquivo 2");
+		lblEditarArquivo = new JLabel("Arquivo para edição");
+		
 		txtArquivo1 = new JTextField();
 		txtArquivo1.setPreferredSize(new Dimension(200, 20));
 		txtArquivo2 = new JTextField();
 		txtArquivo2.setPreferredSize(new Dimension(200, 20));
+		txtEditArquivo = new JTextField();
+		txtEditArquivo.setPreferredSize(new Dimension(400, 20));
+		
 		txtArArq1 = new JTextArea("Número de tuplas:\n"
 				+ "Número de dimensões:", 2, 30);
 		txtArArq2 = new JTextArea("Número de tuplas:\n"
@@ -95,6 +113,8 @@ public class TelaPrincipal extends JFrame {
 		btnArquivo2 = new JButton("Procurar");
 		btnMesclar = new JButton("Mesclar");
 		btnMesclar.setEnabled(ePossivel);
+		btnEditarArquivo = new JButton("Editar");
+		btnProcurarArquivoEdit = new JButton("Procurar");
 
 		grupoRadios = new ButtonGroup();
 		rdMergeHorizontal = new JRadioButton("Mescla Horizontal");
@@ -105,7 +125,11 @@ public class TelaPrincipal extends JFrame {
 
 		ckCabecalho = new JCheckBox("Cabeçalho");
 		ckIndice = new JCheckBox("Índice");
+		ckCabecalhoEdit = new JCheckBox("Cabeçalho");
+		ckIndiceEdit = new JCheckBox("Índice");
+		ckManterCaminhoEdit = new JCheckBox("Salvar no mesmo local");
 
+		
 		grupoRadios.add(rdMergeHorizontal);
 		grupoRadios.add(rdMergeVertical);
 		grupoRadios.add(rdNone);
@@ -113,8 +137,18 @@ public class TelaPrincipal extends JFrame {
 		layoutArquivos = new FlowLayout();
 		layoutAviso = new FlowLayout();
 
+
+		pnlTopo = new JPanel(new GridLayout(0, 2));
+		pnlTopo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		
+		pnlCentro = new JPanel();
+		pnlCentro.setBorder(BorderFactory.createLineBorder(Color.RED));
+		
+		pnlBaixo = new JPanel();
+		
+		
+				
 		pnlArquivos = new JPanel(layoutArquivos);
-		pnlArquivos.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		pnlArquivo1 = new JPanel();
 		pnlArquivo2 = new JPanel();
 		pnlOpcaoMerge = new JPanel();
@@ -152,11 +186,58 @@ public class TelaPrincipal extends JFrame {
 		pnlAvisos.add(pnlInfoArq2);
 		pnlAvisos.add(pnlPossivel);
 
-		setLayout(new GridLayout(0, 2));
+		pnlCentro.add(lblEditarArquivo);
+		pnlCentro.add(txtEditArquivo);
+		pnlCentro.add(btnProcurarArquivoEdit);
+		pnlCentro.add(ckManterCaminhoEdit);
+		pnlCentro.add(ckCabecalhoEdit);
+		pnlCentro.add(ckIndiceEdit);
+		pnlCentro.add(btnEditarArquivo);
+		
+		
+		
+		setLayout(new GridLayout(0, 1));
 
-		add(pnlArquivos);
-		add(pnlAvisos);
+		pnlTopo.add(pnlArquivos);
+		pnlTopo.add(pnlAvisos);
 
+		
+		add(pnlTopo);
+		add(pnlCentro);
+
+		btnProcurarArquivoEdit.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				JFileChooser chooser = new JFileChooser();
+				chooser.showOpenDialog(null);
+				arquivoEdit = chooser.getSelectedFile();
+				txtEditArquivo.setText(arquivoEdit.getAbsolutePath());
+				
+			}
+		});
+		
+		btnEditarArquivo.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				String caminho = null;
+				Gravador gravador = new Gravador();
+				JFileChooser chooser = new JFileChooser();
+				
+				if(!ckManterCaminhoEdit.isSelected()){			
+					if(chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+						caminho = chooser.getSelectedFile().getAbsolutePath();
+					}
+				}
+				
+				gravador.editarArquivo(arquivoEdit, ckCabecalhoEdit.isSelected(),
+									   ckIndiceEdit.isSelected(), caminho);				
+				
+			}
+		});
 		btnArquivo1.addActionListener(new ActionListener() {
 
 			@Override
@@ -211,7 +292,7 @@ public class TelaPrincipal extends JFrame {
 
 				ePossivel = false;
 
-				if (estrtArq1.getNumeroTuplas() == estrtArq2.getNumeroTuplas()) {
+				if (estrtArq1.getNumeroTuplas().equals(estrtArq2.getNumeroTuplas())) {
 					ePossivel = true;
 					strPossibilidade = "A mescla é possível.";
 					atualizaPossibilidade(strPossibilidade);
