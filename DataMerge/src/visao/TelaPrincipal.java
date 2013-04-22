@@ -8,6 +8,8 @@ import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -21,10 +23,17 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SpinnerModel;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import modelo.EstruturaArquivo;
+import controle.ArquivoDAO;
+import controle.Conexao;
 import controle.Gravador;
 import controle.Leitor;
 
@@ -35,10 +44,16 @@ public class TelaPrincipal extends JFrame {
 	private JLabel lblArquivo1;
 	private JLabel lblArquivo2;
 	private JLabel lblEditarArquivo;
+	private JLabel lblBDArquivo;
+	private JLabel lblSkew;
+	private JLabel lblCardinalidade;
 
 	private JTextField txtArquivo1;
 	private JTextField txtArquivo2;
 	private JTextField txtEditArquivo;
+	private JTextField txtBDArquivo;
+	private JTextField txtSkew;
+	private JTextField txtCardinalidade;
 
 	private JTextArea txtArArq1;
 	private JTextArea txtArArq2;
@@ -48,7 +63,9 @@ public class TelaPrincipal extends JFrame {
 	private JButton btnArquivo2;
 	private JButton btnMesclar;
 	private JButton btnEditarArquivo;
+	private JButton btnBDArquivo;
 	private JButton btnProcurarArquivoEdit;
+	private JButton btnProcurarArquivoBD;
 
 	private ButtonGroup grupoRadios;
 	private JRadioButton rdMergeHorizontal;
@@ -67,7 +84,7 @@ public class TelaPrincipal extends JFrame {
 	private JPanel pnlTopo;
 	private JPanel pnlCentro;
 	private JPanel pnlBaixo;
-	
+
 	private JPanel pnlArquivos;
 	private JPanel pnlArquivo1;
 	private JPanel pnlArquivo2;
@@ -81,6 +98,7 @@ public class TelaPrincipal extends JFrame {
 	private File arquivo1;
 	private File arquivo2;
 	private File arquivoEdit;
+	private File arquivoBD;
 
 	private Boolean temArquivos;
 	private Boolean ePossivel;
@@ -95,14 +113,23 @@ public class TelaPrincipal extends JFrame {
 		lblArquivo1 = new JLabel("Arquivo 1");
 		lblArquivo2 = new JLabel("Arquivo 2");
 		lblEditarArquivo = new JLabel("Arquivo para edição");
-		
+		lblBDArquivo = new JLabel("Arquivo para armazenamento");
+		lblSkew = new JLabel("Skew");
+		lblCardinalidade = new JLabel("Cardinalidade");
+
 		txtArquivo1 = new JTextField();
 		txtArquivo1.setPreferredSize(new Dimension(200, 20));
 		txtArquivo2 = new JTextField();
 		txtArquivo2.setPreferredSize(new Dimension(200, 20));
 		txtEditArquivo = new JTextField();
 		txtEditArquivo.setPreferredSize(new Dimension(400, 20));
-		
+		txtBDArquivo = new JTextField();
+		txtBDArquivo.setPreferredSize(new Dimension(500, 20));
+		txtSkew = new JTextField();
+		txtSkew.setPreferredSize(new Dimension(50, 20));
+		txtCardinalidade = new JTextField();
+		txtCardinalidade.setPreferredSize(new Dimension(50, 20));
+
 		txtArArq1 = new JTextArea("Número de tuplas:\n"
 				+ "Número de dimensões:", 2, 30);
 		txtArArq2 = new JTextArea("Número de tuplas:\n"
@@ -114,7 +141,11 @@ public class TelaPrincipal extends JFrame {
 		btnMesclar = new JButton("Mesclar");
 		btnMesclar.setEnabled(ePossivel);
 		btnEditarArquivo = new JButton("Editar");
+		btnEditarArquivo.setEnabled(false);
 		btnProcurarArquivoEdit = new JButton("Procurar");
+		btnProcurarArquivoBD = new JButton("Procurar");
+		btnBDArquivo = new JButton("Armazenar");
+		btnBDArquivo.setEnabled(false);
 
 		grupoRadios = new ButtonGroup();
 		rdMergeHorizontal = new JRadioButton("Mescla Horizontal");
@@ -129,7 +160,6 @@ public class TelaPrincipal extends JFrame {
 		ckIndiceEdit = new JCheckBox("Índice");
 		ckManterCaminhoEdit = new JCheckBox("Salvar no mesmo local");
 
-		
 		grupoRadios.add(rdMergeHorizontal);
 		grupoRadios.add(rdMergeVertical);
 		grupoRadios.add(rdNone);
@@ -137,17 +167,15 @@ public class TelaPrincipal extends JFrame {
 		layoutArquivos = new FlowLayout();
 		layoutAviso = new FlowLayout();
 
-
 		pnlTopo = new JPanel(new GridLayout(0, 2));
 		pnlTopo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		
+
 		pnlCentro = new JPanel();
 		pnlCentro.setBorder(BorderFactory.createLineBorder(Color.RED));
-		
+
 		pnlBaixo = new JPanel();
-		
-		
-				
+		pnlBaixo.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+
 		pnlArquivos = new JPanel(layoutArquivos);
 		pnlArquivo1 = new JPanel();
 		pnlArquivo2 = new JPanel();
@@ -193,49 +221,210 @@ public class TelaPrincipal extends JFrame {
 		pnlCentro.add(ckCabecalhoEdit);
 		pnlCentro.add(ckIndiceEdit);
 		pnlCentro.add(btnEditarArquivo);
-		
-		
-		
+
+		pnlBaixo.add(lblBDArquivo);
+		pnlBaixo.add(txtBDArquivo);
+		pnlBaixo.add(btnProcurarArquivoBD);
+		pnlBaixo.add(lblSkew);
+		pnlBaixo.add(txtSkew);
+		pnlBaixo.add(lblCardinalidade);
+		pnlBaixo.add(txtCardinalidade);
+		pnlBaixo.add(btnBDArquivo);
+
 		setLayout(new GridLayout(0, 1));
 
 		pnlTopo.add(pnlArquivos);
 		pnlTopo.add(pnlAvisos);
 
-		
 		add(pnlTopo);
 		add(pnlCentro);
+		add(pnlBaixo);
 
-		btnProcurarArquivoEdit.addActionListener(new ActionListener() {
+		
+		txtBDArquivo.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void removeUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+		});
+		txtSkew.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void removeUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent arg0) {
+				if (!txtSkew.getText().equals("")
+						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(true);
+				}
+				if (txtSkew.getText().equals("")
+						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+					btnBDArquivo.setEnabled(false);
+				}
+
+			}
+		});
+		txtCardinalidade.getDocument().addDocumentListener(
+				new DocumentListener() {
+
+					@Override
+					public void removeUpdate(DocumentEvent arg0) {
+						if (!txtSkew.getText().equals("")
+								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(true);
+						}
+						if (txtSkew.getText().equals("")
+								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(false);
+						}
+
+					}
+
+					@Override
+					public void insertUpdate(DocumentEvent arg0) {
+						if (!txtSkew.getText().equals("")
+								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(true);
+						}
+						if (txtSkew.getText().equals("")
+								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(false);
+						}
+
+					}
+
+					@Override
+					public void changedUpdate(DocumentEvent arg0) {
+						if (!txtSkew.getText().equals("")
+								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(true);
+						}
+						if (txtSkew.getText().equals("")
+								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+							btnBDArquivo.setEnabled(false);
+						}
+
+					}
+				});
+		
+		btnBDArquivo.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
+				Integer skew = Integer.parseInt(txtSkew.getText());
+				Integer cardinalidade = Integer.parseInt(txtCardinalidade.getText());
+				
+				ArquivoDAO dao = new ArquivoDAO(Conexao.getConexao(), arquivoBD);
+				
+				dao.armazenarArquivo(skew, cardinalidade);
+				
+			}
+		});
+		btnProcurarArquivoBD.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+
+				JFileChooser chooser = new JFileChooser();
+				chooser.showOpenDialog(null);
+				arquivoBD = chooser.getSelectedFile();
+				txtBDArquivo.setText(arquivoBD.getAbsolutePath());
+				
+			}
+		});
+		btnProcurarArquivoEdit.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
 				JFileChooser chooser = new JFileChooser();
 				chooser.showOpenDialog(null);
 				arquivoEdit = chooser.getSelectedFile();
 				txtEditArquivo.setText(arquivoEdit.getAbsolutePath());
-				
+				btnEditarArquivo.setEnabled(true);
+
 			}
 		});
-		
+
 		btnEditarArquivo.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+
 				String caminho = null;
 				Gravador gravador = new Gravador();
 				JFileChooser chooser = new JFileChooser();
-				
-				if(!ckManterCaminhoEdit.isSelected()){			
-					if(chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+
+				if (!ckManterCaminhoEdit.isSelected()) {
+					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 						caminho = chooser.getSelectedFile().getAbsolutePath();
 					}
 				}
-				
-				gravador.editarArquivo(arquivoEdit, ckCabecalhoEdit.isSelected(),
-									   ckIndiceEdit.isSelected(), caminho);				
-				
+
+				gravador.editarArquivo(arquivoEdit,
+						ckCabecalhoEdit.isSelected(),
+						ckIndiceEdit.isSelected(), caminho);
+
 			}
 		});
 		btnArquivo1.addActionListener(new ActionListener() {
@@ -292,7 +481,8 @@ public class TelaPrincipal extends JFrame {
 
 				ePossivel = false;
 
-				if (estrtArq1.getNumeroTuplas().equals(estrtArq2.getNumeroTuplas())) {
+				if (estrtArq1.getNumeroTuplas().equals(
+						estrtArq2.getNumeroTuplas())) {
 					ePossivel = true;
 					strPossibilidade = "A mescla é possível.";
 					atualizaPossibilidade(strPossibilidade);
@@ -361,8 +551,9 @@ public class TelaPrincipal extends JFrame {
 								"Problemas com o arquivo selecionado.");
 					}
 				}
-				
-				JOptionPane.showMessageDialog(null, "O arquivo " + caminho + " foi salvo com sucesso!");
+
+				JOptionPane.showMessageDialog(null, "O arquivo " + caminho
+						+ " foi salvo com sucesso!");
 
 			}
 		});

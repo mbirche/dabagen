@@ -26,7 +26,7 @@ public class BufferedLeitor {
 
 	}
 
-	public EstruturaArquivo obterEstruturaArquivo() {
+	private EstruturaArquivo obterEstruturaArquivo() {
 
 		String strPrimeiraLinha;
 		String[] elementosLinha;
