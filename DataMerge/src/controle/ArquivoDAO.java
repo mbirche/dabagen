@@ -3,6 +3,7 @@ package controle;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.swing.JOptionPane;
 
@@ -14,6 +15,9 @@ public class ArquivoDAO {
 	private Connection conn;
 	private EstruturaArquivo estrutura;
 	BufferedLeitor leitor;
+	int indiceTupla = 1;
+	String nomeTabela;
+	Integer numeroDimensoes;
 
 	public ArquivoDAO(Connection conn, File arquivo) {
 		this.conn = conn;
@@ -22,6 +26,8 @@ public class ArquivoDAO {
 			leitor = new BufferedLeitor(arquivo);
 
 			estrutura = leitor.getEstrutura();
+			numeroDimensoes = estrutura.getDimensoes().size();
+			nomeTabela = Util.obterNomeTabela(estrutura, 0, 20);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -33,21 +39,8 @@ public class ArquivoDAO {
 
 		StringBuffer sql = new StringBuffer();
 		StringBuffer sqlInsercao;
-		StringBuffer nomeTabela = new StringBuffer();
+		String nomeTabela = Util.obterNomeTabela(estrutura, skew, cardinalidade);
 		PreparedStatement ps;
-
-		nomeTabela.append("D");
-		nomeTabela.append(Util.obterValorComPrefixo(estrutura.getDimensoes()
-				.size()));
-		nomeTabela.append("_T");
-		nomeTabela
-				.append(Util.obterValorComPrefixo(estrutura.getNumeroTuplas()));
-		nomeTabela.append("_S");
-		nomeTabela.append(Util.obterValorComPrefixo(skew));
-		nomeTabela.append("_C");
-		nomeTabela.append(Util.obterValorComPrefixo(cardinalidade));
-
-		System.out.println(nomeTabela.toString());
 
 		sql.append("CREATE TABLE ");
 		sql.append(nomeTabela);
@@ -111,9 +104,52 @@ public class ArquivoDAO {
 			
 			ps.close();
 			
+			JOptionPane.showMessageDialog(null, "Dados inseridos com sucesso");
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public Tupla[] obterArrayTuplas(){
+		Tupla[] tuplas = new Tupla[estrutura.getNumeroTuplas()];
+		
+		
+		return tuplas;
+	}
+	
+	public Tupla obterProximaTupla(){
+		
+		Tupla tupla = null;
+		PreparedStatement ps;
+		String sql = "SELECT * FROM " + nomeTabela + " WHERE id = " + indiceTupla;
+		int[] valores = new int[numeroDimensoes];
+		ResultSet rs;
+		
+		
+		try{
+			
+		ps = conn.prepareStatement(sql);
+		
+		rs = ps.executeQuery();
+		rs.next();
+		for(int i = 0; i < numeroDimensoes; i++){
+			valores[i] = rs.getInt(i + 2);
+		}
+		
+		
+		
+		
+		tupla = new Tupla(valores);
+		
+		
+		ps.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		indiceTupla++;
+		return tupla;
 	}
 
 }

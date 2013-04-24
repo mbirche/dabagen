@@ -2,17 +2,17 @@ package modelo;
 
 public class Tupla {
 
-	private Integer[] valores;
+	private int[] valores;
 
-	public Tupla(Integer[] valores) {
+	public Tupla(int[] valores) {
 		this.valores = valores;
 	}
 
-	public Integer[] getValores() {
+	public int[] getValores() {
 		return valores;
 	}
 
-	public void setValores(Integer[] valores) {
+	public void setValores(int[] valores) {
 		this.valores = valores;
 	}
 }

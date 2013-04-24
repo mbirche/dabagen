@@ -80,7 +80,7 @@ public class Leitor {
 		String[] linhas;
 		EstruturaArquivo estrutura = obterEstruturaArquivo(arquivo);
 		Tupla[] tuplas = new Tupla[estrutura.getNumeroTuplas()];
-		Integer[] valores;
+		int[] valores;
 
 		try {
 			
@@ -95,7 +95,7 @@ public class Leitor {
 			for (int i = 1; i < linhas.length -1; i++){ // O último \n cria uma linha vazia no arry de linhas
 //				System.out.println(linhas[i]);
 				elementosLinha = linhas[i].split(" ");
-				valores = new Integer[estrutura.getDimensoes().size()];
+				valores = new int[estrutura.getDimensoes().size()];
 				
 				for( int j = 0; j < elementosLinha.length - 1; j++){
 					

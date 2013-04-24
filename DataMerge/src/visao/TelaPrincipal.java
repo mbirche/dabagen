@@ -1,6 +1,5 @@
 package visao;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -8,8 +7,6 @@ import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -23,19 +20,18 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SpinnerModel;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import modelo.EstruturaArquivo;
 import controle.ArquivoDAO;
+import controle.BufferedLeitor;
 import controle.Conexao;
 import controle.Gravador;
 import controle.Leitor;
+import controle.TestesVelocidade;
 
 public class TelaPrincipal extends JFrame {
 
@@ -66,6 +62,7 @@ public class TelaPrincipal extends JFrame {
 	private JButton btnBDArquivo;
 	private JButton btnProcurarArquivoEdit;
 	private JButton btnProcurarArquivoBD;
+	private JButton btnTesteVelocidade;
 
 	private ButtonGroup grupoRadios;
 	private JRadioButton rdMergeHorizontal;
@@ -146,6 +143,8 @@ public class TelaPrincipal extends JFrame {
 		btnProcurarArquivoBD = new JButton("Procurar");
 		btnBDArquivo = new JButton("Armazenar");
 		btnBDArquivo.setEnabled(false);
+		btnTesteVelocidade = new JButton("Teste Velocidade");
+		btnTesteVelocidade.setEnabled(false);
 
 		grupoRadios = new ButtonGroup();
 		rdMergeHorizontal = new JRadioButton("Mescla Horizontal");
@@ -230,6 +229,7 @@ public class TelaPrincipal extends JFrame {
 		pnlBaixo.add(lblCardinalidade);
 		pnlBaixo.add(txtCardinalidade);
 		pnlBaixo.add(btnBDArquivo);
+		pnlBaixo.add(btnTesteVelocidade);
 
 		setLayout(new GridLayout(0, 1));
 
@@ -366,6 +366,16 @@ public class TelaPrincipal extends JFrame {
 					}
 				});
 		
+		btnTesteVelocidade.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				TestesVelocidade teste = new TestesVelocidade(arquivoBD);
+				
+				teste.testeLeituraTupla();
+				
+			}
+		});
 		btnBDArquivo.addActionListener(new ActionListener() {
 			
 			@Override
@@ -377,6 +387,7 @@ public class TelaPrincipal extends JFrame {
 				ArquivoDAO dao = new ArquivoDAO(Conexao.getConexao(), arquivoBD);
 				
 				dao.armazenarArquivo(skew, cardinalidade);
+	
 				
 			}
 		});
@@ -390,6 +401,7 @@ public class TelaPrincipal extends JFrame {
 				arquivoBD = chooser.getSelectedFile();
 				txtBDArquivo.setText(arquivoBD.getAbsolutePath());
 				
+				btnTesteVelocidade.setEnabled(true);
 			}
 		});
 		btnProcurarArquivoEdit.addActionListener(new ActionListener() {
@@ -418,13 +430,12 @@ public class TelaPrincipal extends JFrame {
 				if (!ckManterCaminhoEdit.isSelected()) {
 					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 						caminho = chooser.getSelectedFile().getAbsolutePath();
+						
+						gravador.editarArquivo(arquivoEdit,
+								ckCabecalhoEdit.isSelected(),
+								ckIndiceEdit.isSelected(), caminho);
 					}
 				}
-
-				gravador.editarArquivo(arquivoEdit,
-						ckCabecalhoEdit.isSelected(),
-						ckIndiceEdit.isSelected(), caminho);
-
 			}
 		});
 		btnArquivo1.addActionListener(new ActionListener() {
@@ -525,35 +536,36 @@ public class TelaPrincipal extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 
 				Gravador gravador = new Gravador();
-				String caminho = "";
+				String caminho = null;
 				JFileChooser chooser = new JFileChooser();
 				if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 					caminho = chooser.getSelectedFile().getAbsolutePath();
-				}
-				gravador.setCaminhoArquivo(caminho);
+					gravador.setCaminhoArquivo(caminho);
 
-				if (rdMergeHorizontal.isSelected()) {
-					try {
-						gravador.mergeHorizontal(arquivo1, arquivo2,
-								ckCabecalho.isSelected(), ckIndice.isSelected());
-					} catch (FileNotFoundException e) {
-						JOptionPane.showMessageDialog(null,
-								"Problemas com o arquivo selecionado.");
+					if (rdMergeHorizontal.isSelected()) {
+						try {
+							gravador.mergeHorizontal(arquivo1, arquivo2,
+									ckCabecalho.isSelected(), ckIndice.isSelected());
+						} catch (FileNotFoundException e) {
+							JOptionPane.showMessageDialog(null,
+									"Problemas com o arquivo selecionado.");
+						}
 					}
-				}
 
-				if (rdMergeVertical.isSelected()) {
-					try {
-						gravador.mergeVertical(arquivo1, arquivo2,
-								ckCabecalho.isSelected(), ckIndice.isSelected());
-					} catch (FileNotFoundException e) {
-						JOptionPane.showMessageDialog(null,
-								"Problemas com o arquivo selecionado.");
+					if (rdMergeVertical.isSelected()) {
+						try {
+							gravador.mergeVertical(arquivo1, arquivo2,
+									ckCabecalho.isSelected(), ckIndice.isSelected());
+						} catch (FileNotFoundException e) {
+							JOptionPane.showMessageDialog(null,
+									"Problemas com o arquivo selecionado.");
+						}
 					}
-				}
 
-				JOptionPane.showMessageDialog(null, "O arquivo " + caminho
-						+ " foi salvo com sucesso!");
+					JOptionPane.showMessageDialog(null, "O arquivo " + caminho
+							+ " foi salvo com sucesso!");
+				}
+				
 
 			}
 		});
@@ -566,8 +578,16 @@ public class TelaPrincipal extends JFrame {
 
 	private void montaInfoArq1(File arquivo1) {
 
-		Leitor leitor = new Leitor();
-		EstruturaArquivo estrtArq1 = leitor.obterEstruturaArquivo(arquivo1);
+		BufferedLeitor leitor = null;
+		
+		try{
+			
+		leitor = new BufferedLeitor(arquivo1);
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		EstruturaArquivo estrtArq1 = leitor.getEstrutura();
 
 		String info = "Número de tuplas: " + estrtArq1.getNumeroTuplas() + "\n"
 				+ "Número de dimensões: " + estrtArq1.getDimensoes().size();
@@ -576,8 +596,16 @@ public class TelaPrincipal extends JFrame {
 
 	private void montaInfoArq2(File arquivo2) {
 
-		Leitor leitor = new Leitor();
-		EstruturaArquivo estrtArq2 = leitor.obterEstruturaArquivo(arquivo2);
+		BufferedLeitor leitor = null;
+		
+		try{
+			
+		leitor = new BufferedLeitor(arquivo2);
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		EstruturaArquivo estrtArq2 = leitor.getEstrutura();
 
 		String info = "Número de tuplas: " + estrtArq2.getNumeroTuplas() + "\n"
 				+ "Número de dimensões: " + estrtArq2.getDimensoes().size();

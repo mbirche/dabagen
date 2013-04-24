@@ -68,7 +68,7 @@ public class BufferedLeitor {
 		String strLeitura;
 		String[] elementosLinha;
 		Tupla tupla = null;
-		Integer[] valores = new Integer[estrutura.getDimensoes().size()];
+		int[] valores = new int[estrutura.getDimensoes().size()];
 
 		try {
 
