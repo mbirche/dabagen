@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -245,7 +244,7 @@ public class Gravador {
 
 		Integer totalTuplas = estrutArq1.getNumeroTuplas()
 				+ estrutArq2.getNumeroTuplas();
-		Integer totalDimensoes = estrutArq1.getDimensoes().size();
+		
 
 		StringBuffer primeiraLinha;
 		StringBuffer novaTupla;
