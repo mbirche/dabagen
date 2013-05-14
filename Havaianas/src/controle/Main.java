@@ -16,14 +16,19 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
-		String caminho = "C:/Users/Marcelo/Documents/iCubing/havaianasOriginal.csv";
-		String caminhoNovo = "C:/Users/Marcelo/Documents/iCubing/havaianas.csv";
+		
+		//Caminho do arquivo csv original
+		String caminho = Constantes.caminhoArquivo + "havaianasOriginal.csv";
+		//Caminho para o novo arquivo que será gerado, corrigindo o arquivo original e obtendo a estrutura do mesmo
+		String caminhoNovo = Constantes.caminhoArquivo + "havaianas.csv";
+		
 		File arquivo = new File(caminho);
 		File arquivoNovo = new File(caminhoNovo);
 
 		List<String> linhaParaGravacao = new ArrayList<String>();
 		List<String> linhaParaGravacaoComIndice = new ArrayList<String>();
 		List<String> primeiraLinha = new ArrayList<String>();
+		List<String> linhaLeitura = new ArrayList<String>();
 
 		String strLeitura;
 		String[] elementosTupla;
@@ -58,30 +63,24 @@ public class Main {
 
 				linhaParaGravacaoComIndice.add(String.valueOf(i + 1));
 
-				for (int j = 0; j < 41; j++) {
+				for (int j = 0; j < mapa.size(); j++) {
 
-					Iterator<Entry<Integer, ArrayList<String>>> it = mapa
-							.entrySet().iterator();
-					while (it.hasNext()) {
-						Entry<Integer, ArrayList<String>> pairs = (Entry<Integer, ArrayList<String>>) it
-								.next();
-						if (pairs.getValue().contains(elementosTupla[j])) {
+					linhaLeitura = mapa.get(j);
+					if (linhaLeitura.contains(elementosTupla[j])) {
 
-							if (!elementosTupla[j].equals("null")
-									&& !elementosTupla[j].equals("0"))
-								valorNumerico = String
-										.valueOf((pairs.getValue().indexOf(
-												elementosTupla[j]) == 0 ? pairs
-												.getValue().size() + 2 : pairs
-												.getValue().indexOf(
-														elementosTupla[j])));
-							else if (elementosTupla[j].equals("null"))
-								valorNumerico = String.valueOf(pairs.getValue()
-										.size() + 1);
-							else if (elementosTupla[j].equals("0"))
-								valorNumerico = String.valueOf(pairs.getValue()
-										.size() + 2);
-						}
+						if (!elementosTupla[j].equals("null")
+								&& !elementosTupla[j].equals("0"))
+							valorNumerico = String
+									.valueOf((linhaLeitura
+											.indexOf(elementosTupla[j]) == 0 ? linhaLeitura
+											.size() + 2 : linhaLeitura
+											.indexOf(elementosTupla[j])));
+						else if (elementosTupla[j].equals("null"))
+							valorNumerico = String
+									.valueOf(linhaLeitura.size() + 1);
+						else if (elementosTupla[j].equals("0"))
+							valorNumerico = String
+									.valueOf(linhaLeitura.size() + 2);
 					}
 
 					linhaParaGravacao.add(valorNumerico);

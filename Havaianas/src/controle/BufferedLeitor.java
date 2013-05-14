@@ -23,7 +23,9 @@ public class BufferedLeitor {
 	FileReader novoFlReader;
 	BufferedReader bReader;
 
-	Boolean achouAspas = false;
+	Boolean abriuAspas = false;
+	Boolean fechouAspas = true;
+	Boolean dentroCampoTexto = false;
 	Boolean campoIncompleto = false;
 
 	public BufferedLeitor(File arquivo, Boolean lerEstrutura)
@@ -155,7 +157,7 @@ public class BufferedLeitor {
 									campoIncompleto = false;
 									continue;
 								}
-								
+
 								linha.add(parte);
 							}
 						}
@@ -166,7 +168,7 @@ public class BufferedLeitor {
 				System.out.println("Gravando linha " + numeroTuplas);
 				System.out.println("Linha para gravar " + linha);
 
-				for (int i = 0; i < (linha.size() <= 41 ? linha.size() : 41); i++) {
+				for (int i = 0; i < linha.size(); i++) {
 
 					if (!mapa.get(i).contains(linha.get(i))) {
 
@@ -213,13 +215,24 @@ public class BufferedLeitor {
 
 			retorno = new StringBuilder(linha);
 
+			if (!fechouAspas && dentroCampoTexto) {
+
+				campoIncompleto = true;
+
+			}
 			for (int i = 0; i < linha.length(); i++) {
 
-				if (linha.charAt(i) == '\"') {
-					achouAspas = !achouAspas;
+				if (linha.charAt(i) == '\"' && fechouAspas) {
+					abriuAspas = true;
+					fechouAspas = false;
+					dentroCampoTexto = true;
+				}else if (linha.charAt(i) == '\"' && abriuAspas) {
+					abriuAspas = false;
+					fechouAspas = true;
+					dentroCampoTexto = false;
 				}
 
-				if (achouAspas) {
+				if (abriuAspas) {
 					if (linha.charAt(i) == ';') {
 						retorno.setCharAt(i, ':');
 					}
@@ -227,8 +240,9 @@ public class BufferedLeitor {
 
 			}
 
-			if (achouAspas)
+			if (abriuAspas) {
 				campoIncompleto = true;
+			}
 
 			return retorno.toString();
 		}
