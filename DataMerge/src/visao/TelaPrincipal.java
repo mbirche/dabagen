@@ -19,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -32,8 +33,9 @@ import controle.Conexao;
 import controle.Gravador;
 import controle.Leitor;
 import controle.TestesVelocidade;
+import controle.Util;
 
-public class TelaPrincipal extends JFrame {
+public class TelaPrincipal extends JFrame implements Runnable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -75,6 +77,10 @@ public class TelaPrincipal extends JFrame {
 	private JCheckBox ckIndiceEdit;
 	private JCheckBox ckManterCaminhoEdit;
 
+	private JProgressBar pBarMescla;
+	private JProgressBar pBarEdição;
+	private JProgressBar pBarBD;
+
 	private LayoutManager layoutArquivos;
 	private LayoutManager layoutAviso;
 
@@ -99,13 +105,19 @@ public class TelaPrincipal extends JFrame {
 
 	private Boolean temArquivos;
 	private Boolean ePossivel;
+	private Boolean preencheBarra;
 
 	private String strPossibilidade;
+
+	private Integer porcentagemBarra;
+
+	private Thread trProgresso;
 
 	public TelaPrincipal() {
 
 		temArquivos = false;
 		ePossivel = false;
+		preencheBarra = true;
 
 		lblArquivo1 = new JLabel("Arquivo 1");
 		lblArquivo2 = new JLabel("Arquivo 2");
@@ -158,6 +170,13 @@ public class TelaPrincipal extends JFrame {
 		ckCabecalhoEdit = new JCheckBox("Cabeçalho");
 		ckIndiceEdit = new JCheckBox("Índice");
 		ckManterCaminhoEdit = new JCheckBox("Salvar no mesmo local");
+
+		
+
+		porcentagemBarra = 0;
+
+		pBarMescla = new JProgressBar();
+		pBarMescla.setStringPainted(true);
 
 		grupoRadios.add(rdMergeHorizontal);
 		grupoRadios.add(rdMergeVertical);
@@ -212,6 +231,7 @@ public class TelaPrincipal extends JFrame {
 		pnlAvisos.add(pnlInfoArq1);
 		pnlAvisos.add(pnlInfoArq2);
 		pnlAvisos.add(pnlPossivel);
+		pnlAvisos.add(pBarMescla);
 
 		pnlCentro.add(lblEditarArquivo);
 		pnlCentro.add(txtEditArquivo);
@@ -240,17 +260,18 @@ public class TelaPrincipal extends JFrame {
 		add(pnlCentro);
 		add(pnlBaixo);
 
-		
 		txtBDArquivo.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
 			public void removeUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -259,11 +280,13 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void insertUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -272,11 +295,13 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void changedUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -287,11 +312,13 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void removeUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -300,11 +327,13 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void insertUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -313,11 +342,13 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void changedUpdate(DocumentEvent arg0) {
 				if (!txtSkew.getText().equals("")
-						&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+						&& !txtCardinalidade.getText().equals("")
+						&& !txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(true);
 				}
 				if (txtSkew.getText().equals("")
-						|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+						|| txtCardinalidade.getText().equals("")
+						|| txtBDArquivo.getText().equals("")) {
 					btnBDArquivo.setEnabled(false);
 				}
 
@@ -329,11 +360,13 @@ public class TelaPrincipal extends JFrame {
 					@Override
 					public void removeUpdate(DocumentEvent arg0) {
 						if (!txtSkew.getText().equals("")
-								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+								&& !txtCardinalidade.getText().equals("")
+								&& !txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(true);
 						}
 						if (txtSkew.getText().equals("")
-								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+								|| txtCardinalidade.getText().equals("")
+								|| txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(false);
 						}
 
@@ -342,11 +375,13 @@ public class TelaPrincipal extends JFrame {
 					@Override
 					public void insertUpdate(DocumentEvent arg0) {
 						if (!txtSkew.getText().equals("")
-								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+								&& !txtCardinalidade.getText().equals("")
+								&& !txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(true);
 						}
 						if (txtSkew.getText().equals("")
-								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+								|| txtCardinalidade.getText().equals("")
+								|| txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(false);
 						}
 
@@ -355,40 +390,42 @@ public class TelaPrincipal extends JFrame {
 					@Override
 					public void changedUpdate(DocumentEvent arg0) {
 						if (!txtSkew.getText().equals("")
-								&& !txtCardinalidade.getText().equals("") && !txtBDArquivo.getText().equals("")) {
+								&& !txtCardinalidade.getText().equals("")
+								&& !txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(true);
 						}
 						if (txtSkew.getText().equals("")
-								|| txtCardinalidade.getText().equals("") || txtBDArquivo.getText().equals("")) {
+								|| txtCardinalidade.getText().equals("")
+								|| txtBDArquivo.getText().equals("")) {
 							btnBDArquivo.setEnabled(false);
 						}
 
 					}
 				});
-		
+
 		btnTesteVelocidade.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				TestesVelocidade teste = new TestesVelocidade(arquivoBD);
-				
+
 				teste.testeLeituraTupla();
-				
+
 			}
 		});
 		btnBDArquivo.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+
 				Integer skew = Integer.parseInt(txtSkew.getText());
-				Integer cardinalidade = Integer.parseInt(txtCardinalidade.getText());
-				
+				Integer cardinalidade = Integer.parseInt(txtCardinalidade
+						.getText());
+
 				ArquivoDAO dao = new ArquivoDAO(Conexao.getConexao(), arquivoBD);
-				
+
 				dao.armazenarArquivo(skew, cardinalidade);
-	
-				
+
 			}
 		});
 		btnProcurarArquivoBD.addActionListener(new ActionListener() {
@@ -396,11 +433,14 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 				chooser.showOpenDialog(null);
 				arquivoBD = chooser.getSelectedFile();
+				if (arquivoBD != null)
+					Util.setCaminhoVisitado(arquivoBD.getParentFile());
 				txtBDArquivo.setText(arquivoBD.getAbsolutePath());
-				
+
 				btnTesteVelocidade.setEnabled(true);
 			}
 		});
@@ -409,9 +449,14 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 				chooser.showOpenDialog(null);
 				arquivoEdit = chooser.getSelectedFile();
+
+				if (arquivoEdit != null)
+					Util.setCaminhoVisitado(arquivoEdit.getParentFile());
+
 				txtEditArquivo.setText(arquivoEdit.getAbsolutePath());
 				btnEditarArquivo.setEnabled(true);
 
@@ -425,12 +470,13 @@ public class TelaPrincipal extends JFrame {
 
 				String caminho = null;
 				Gravador gravador = new Gravador();
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 
 				if (!ckManterCaminhoEdit.isSelected()) {
 					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 						caminho = chooser.getSelectedFile().getAbsolutePath();
-						
+
 						gravador.editarArquivo(arquivoEdit,
 								ckCabecalhoEdit.isSelected(),
 								ckIndiceEdit.isSelected(), caminho);
@@ -442,9 +488,12 @@ public class TelaPrincipal extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 				chooser.showOpenDialog(null);
 				arquivo1 = chooser.getSelectedFile();
+				if (arquivo1 != null)
+					Util.setCaminhoVisitado(arquivo1.getParentFile());
 				txtArquivo1.setText(arquivo1.getAbsolutePath());
 				montaInfoArq1(arquivo1);
 
@@ -463,9 +512,12 @@ public class TelaPrincipal extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 				chooser.showOpenDialog(null);
 				arquivo2 = chooser.getSelectedFile();
+				if (arquivo2 != null)
+					Util.setCaminhoVisitado(arquivo2.getParentFile());
 				txtArquivo2.setText(arquivo2.getAbsolutePath());
 				montaInfoArq2(arquivo2);
 
@@ -537,15 +589,18 @@ public class TelaPrincipal extends JFrame {
 
 				Gravador gravador = new Gravador();
 				String caminho = null;
-				JFileChooser chooser = new JFileChooser();
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
 				if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 					caminho = chooser.getSelectedFile().getAbsolutePath();
 					gravador.setCaminhoArquivo(caminho);
 
 					if (rdMergeHorizontal.isSelected()) {
 						try {
+							trProgresso = new Thread(getTela());
 							gravador.mergeHorizontal(arquivo1, arquivo2,
-									ckCabecalho.isSelected(), ckIndice.isSelected());
+									ckCabecalho.isSelected(),
+									ckIndice.isSelected(), getTela());
 						} catch (FileNotFoundException e) {
 							JOptionPane.showMessageDialog(null,
 									"Problemas com o arquivo selecionado.");
@@ -555,7 +610,8 @@ public class TelaPrincipal extends JFrame {
 					if (rdMergeVertical.isSelected()) {
 						try {
 							gravador.mergeVertical(arquivo1, arquivo2,
-									ckCabecalho.isSelected(), ckIndice.isSelected());
+									ckCabecalho.isSelected(),
+									ckIndice.isSelected());
 						} catch (FileNotFoundException e) {
 							JOptionPane.showMessageDialog(null,
 									"Problemas com o arquivo selecionado.");
@@ -565,7 +621,6 @@ public class TelaPrincipal extends JFrame {
 					JOptionPane.showMessageDialog(null, "O arquivo " + caminho
 							+ " foi salvo com sucesso!");
 				}
-				
 
 			}
 		});
@@ -579,12 +634,12 @@ public class TelaPrincipal extends JFrame {
 	private void montaInfoArq1(File arquivo1) {
 
 		BufferedLeitor leitor = null;
-		
-		try{
-			
-		leitor = new BufferedLeitor(arquivo1);
-		
-		}catch(Exception e){
+
+		try {
+
+			leitor = new BufferedLeitor(arquivo1);
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		EstruturaArquivo estrtArq1 = leitor.getEstrutura();
@@ -597,12 +652,12 @@ public class TelaPrincipal extends JFrame {
 	private void montaInfoArq2(File arquivo2) {
 
 		BufferedLeitor leitor = null;
-		
-		try{
-			
-		leitor = new BufferedLeitor(arquivo2);
-		
-		}catch(Exception e){
+
+		try {
+
+			leitor = new BufferedLeitor(arquivo2);
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		EstruturaArquivo estrtArq2 = leitor.getEstrutura();
@@ -622,5 +677,47 @@ public class TelaPrincipal extends JFrame {
 	private void limpaOpcoesMerge() {
 		rdNone.setSelected(true);
 	}
+
+	@Override
+	public void run() {
+
+		while (preencheBarra) {
+			
+			pBarMescla.setValue(porcentagemBarra);
+			pBarMescla.setVisible(true);
+			
+		}
+	}
+	
+
+
+	public Integer getPorcentagemBarra() {
+		return porcentagemBarra;
+	}
+
+	public void setPorcentagemBarra(Integer porcentagemBarra) {
+		this.porcentagemBarra = porcentagemBarra;
+	}
+
+	public Thread getTrProgresso() {
+		return trProgresso;
+	}
+
+	public void setTrProgresso(Thread trProgresso) {
+		this.trProgresso = trProgresso;
+	}
+
+	private TelaPrincipal getTela() {
+		return this;
+	}
+
+	public Boolean getPreencheBarra() {
+		return preencheBarra;
+	}
+
+	public void setPreencheBarra(Boolean preencheBarra) {
+		this.preencheBarra = preencheBarra;
+	}
+
 
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import modelo.Dimensao;
 import modelo.EstruturaArquivo;
 import modelo.Tupla;
+import visao.TelaPrincipal;
 
 public class Gravador {
 
@@ -53,7 +54,7 @@ public class Gravador {
 	 *             Lança excessão se houver problemas na abertura dos arquivos
 	 */
 	public void mergeHorizontal(File arquivo1, File arquivo2,
-			Boolean temCabecalho, Boolean temIndice)
+			Boolean temCabecalho, Boolean temIndice, TelaPrincipal tela)
 			throws FileNotFoundException {
 
 		Integer[] novosValores;
@@ -143,9 +144,15 @@ public class Gravador {
 
 			// Escrita das tuplas no arquivo
 			// Vamos escrever as tuplas no arquivo
+			
+			tela.getTrProgresso().start();
+			
 
 			for (int i = 0; i < totalTuplas; i++) {
 
+				tela.setPorcentagemBarra((int)(100 * i) / totalTuplas);
+				
+				
 				iVal1 = iVal2 = 0;
 				vezArq1 = true;
 
@@ -205,7 +212,10 @@ public class Gravador {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		
+		tela.setPorcentagemBarra(0);
+		tela.setPreencheBarra(false);
+		tela.getTrProgresso().interrupt();
 	}
 
 	/**

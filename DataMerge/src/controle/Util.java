@@ -1,8 +1,12 @@
 package controle;
 
+import java.io.File;
+
 import modelo.EstruturaArquivo;
 
 public class Util {
+	
+	 private static File caminhoVisitado = null;
 	
 	public static String obterValorComPrefixo(Integer valor){
 		
@@ -35,5 +39,14 @@ public class Util {
 		
 		return nomeTabela.toString();
 	}
+
+	public static File getCaminhoVisitado() {
+		return caminhoVisitado;
+	}
+
+	public static void setCaminhoVisitado(File caminhoVisitado) {
+		Util.caminhoVisitado = caminhoVisitado;
+	}
+	
 
 }
