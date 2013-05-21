@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 
 import modelo.EstruturaArquivo;
 import controle.ArquivoDAO;
+import controle.BarraProgresso;
 import controle.BufferedLeitor;
 import controle.Conexao;
 import controle.Gravador;
@@ -35,7 +36,7 @@ import controle.Leitor;
 import controle.TestesVelocidade;
 import controle.Util;
 
-public class TelaPrincipal extends JFrame implements Runnable {
+public class TelaPrincipal extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 
@@ -71,8 +72,12 @@ public class TelaPrincipal extends JFrame implements Runnable {
 	private JRadioButton rdMergeVertical;
 	private JRadioButton rdNone;
 
+	private JCheckBox ckCriarArquivo1;
+	private JCheckBox ckCriarArquivo2;
 	private JCheckBox ckCabecalho;
 	private JCheckBox ckIndice;
+	private JCheckBox ckCabecalho2;
+	private JCheckBox ckIndice2;
 	private JCheckBox ckCabecalhoEdit;
 	private JCheckBox ckIndiceEdit;
 	private JCheckBox ckManterCaminhoEdit;
@@ -80,6 +85,8 @@ public class TelaPrincipal extends JFrame implements Runnable {
 	private JProgressBar pBarMescla;
 	private JProgressBar pBarEdição;
 	private JProgressBar pBarBD;
+
+	private BarraProgresso barraProgresso;
 
 	private LayoutManager layoutArquivos;
 	private LayoutManager layoutAviso;
@@ -110,8 +117,6 @@ public class TelaPrincipal extends JFrame implements Runnable {
 	private String strPossibilidade;
 
 	private Integer porcentagemBarra;
-
-	private Thread trProgresso;
 
 	public TelaPrincipal() {
 
@@ -165,13 +170,15 @@ public class TelaPrincipal extends JFrame implements Runnable {
 		rdMergeVertical.setEnabled(temArquivos);
 		rdNone = new JRadioButton();
 
+		ckCriarArquivo1 = new JCheckBox("Criar Arquivo 1");
+		ckCriarArquivo2 = new JCheckBox("Criar Arquivo 2");
 		ckCabecalho = new JCheckBox("Cabeçalho");
 		ckIndice = new JCheckBox("Índice");
+		ckCabecalho2 = new JCheckBox("Cabeçalho");
+		ckIndice2 = new JCheckBox("Índice");
 		ckCabecalhoEdit = new JCheckBox("Cabeçalho");
 		ckIndiceEdit = new JCheckBox("Índice");
 		ckManterCaminhoEdit = new JCheckBox("Salvar no mesmo local");
-
-		
 
 		porcentagemBarra = 0;
 
@@ -187,6 +194,7 @@ public class TelaPrincipal extends JFrame implements Runnable {
 
 		pnlTopo = new JPanel(new GridLayout(0, 2));
 		pnlTopo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		pnlTopo.setPreferredSize(new Dimension(300, 600));
 
 		pnlCentro = new JPanel();
 		pnlCentro.setBorder(BorderFactory.createLineBorder(Color.RED));
@@ -198,7 +206,7 @@ public class TelaPrincipal extends JFrame implements Runnable {
 		pnlArquivo1 = new JPanel();
 		pnlArquivo2 = new JPanel();
 		pnlOpcaoMerge = new JPanel();
-		pnlOpcoesEstrutura = new JPanel();
+		pnlOpcoesEstrutura = new JPanel(new GridLayout(0, 3));
 
 		pnlAvisos = new JPanel(layoutAviso);
 		pnlInfoArq1 = new JPanel();
@@ -215,8 +223,14 @@ public class TelaPrincipal extends JFrame implements Runnable {
 		pnlOpcaoMerge.add(rdMergeHorizontal);
 		pnlOpcaoMerge.add(rdMergeVertical);
 
+		pnlOpcoesEstrutura.add(ckCriarArquivo1);
 		pnlOpcoesEstrutura.add(ckCabecalho);
 		pnlOpcoesEstrutura.add(ckIndice);
+
+		pnlOpcoesEstrutura.add(ckCriarArquivo2);
+		pnlOpcoesEstrutura.add(ckCabecalho2);
+		pnlOpcoesEstrutura.add(ckIndice2);
+
 		pnlOpcoesEstrutura.add(btnMesclar);
 
 		pnlArquivos.add(pnlArquivo1);
@@ -587,42 +601,99 @@ public class TelaPrincipal extends JFrame implements Runnable {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 
-				Gravador gravador = new Gravador();
-				String caminho = null;
-				JFileChooser chooser = new JFileChooser(Util
-						.getCaminhoVisitado());
-				if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-					caminho = chooser.getSelectedFile().getAbsolutePath();
-					gravador.setCaminhoArquivo(caminho);
+				if (!ckCriarArquivo1.isSelected()
+						&& !ckCriarArquivo2.isSelected()) {
+					JOptionPane.showMessageDialog(null,
+							"Selecione a criação de pelo menos um arquivo");
+				} else {
+					String caminho = null;
+					JFileChooser chooser = new JFileChooser(Util
+							.getCaminhoVisitado());
+					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+						caminho = chooser.getSelectedFile()
+								.getAbsolutePath();
 
-					if (rdMergeHorizontal.isSelected()) {
-						try {
-							trProgresso = new Thread(getTela());
-							gravador.mergeHorizontal(arquivo1, arquivo2,
-									ckCabecalho.isSelected(),
-									ckIndice.isSelected(), getTela());
-						} catch (FileNotFoundException e) {
-							JOptionPane.showMessageDialog(null,
-									"Problemas com o arquivo selecionado.");
+					if (ckCriarArquivo1.isSelected()) {
+						Gravador gravador = new Gravador();
+						
+							gravador.setCaminhoArquivo(caminho + "1");
+
+							if (rdMergeHorizontal.isSelected()) {
+								try {
+
+									barraProgresso = new BarraProgresso(
+											pBarMescla, getTela());
+									barraProgresso.setPorcentagem(0);
+									pnlAvisos.repaint();
+
+									gravador.mergeHorizontal(arquivo1,
+											arquivo2, ckCabecalho.isSelected(),
+											ckIndice.isSelected(), getTela());
+								} catch (FileNotFoundException e) {
+									JOptionPane
+											.showMessageDialog(null,
+													"Problemas com o arquivo selecionado.");
+								}
+							}
+
+							if (rdMergeVertical.isSelected()) {
+								try {
+									gravador.mergeVertical(arquivo1, arquivo2,
+											ckCabecalho.isSelected(),
+											ckIndice.isSelected());
+								} catch (FileNotFoundException e) {
+									JOptionPane
+											.showMessageDialog(null,
+													"Problemas com o arquivo selecionado.");
+								}
+							}
+
 						}
+
+					}
+					if (ckCriarArquivo2.isSelected()) {
+						Gravador gravador2 = new Gravador();
+												
+						gravador2.setCaminhoArquivo(caminho + "2");
+
+							if (rdMergeHorizontal.isSelected()) {
+								try {
+
+									barraProgresso = new BarraProgresso(
+											pBarMescla, getTela());
+									barraProgresso.setPorcentagem(0);
+									pnlAvisos.repaint();
+
+									gravador2.mergeHorizontal(arquivo1,
+											arquivo2, ckCabecalho2.isSelected(),
+											ckIndice2.isSelected(), getTela());
+								} catch (FileNotFoundException e) {
+									JOptionPane
+											.showMessageDialog(null,
+													"Problemas com o arquivo selecionado.");
+								}
+							}
+
+							if (rdMergeVertical.isSelected()) {
+								try {
+									gravador2.mergeVertical(arquivo1, arquivo2,
+											ckCabecalho2.isSelected(),
+											ckIndice2.isSelected());
+								} catch (FileNotFoundException e) {
+									JOptionPane
+											.showMessageDialog(null,
+													"Problemas com o arquivo selecionado.");
+								}
+							}
+
+							
+						}
+
 					}
 
-					if (rdMergeVertical.isSelected()) {
-						try {
-							gravador.mergeVertical(arquivo1, arquivo2,
-									ckCabecalho.isSelected(),
-									ckIndice.isSelected());
-						} catch (FileNotFoundException e) {
-							JOptionPane.showMessageDialog(null,
-									"Problemas com o arquivo selecionado.");
-						}
-					}
-
-					JOptionPane.showMessageDialog(null, "O arquivo " + caminho
-							+ " foi salvo com sucesso!");
+				JOptionPane.showMessageDialog(null, "O(s) arquivo(s) foi(ram) salvo(s) com sucesso!");
 				}
-
-			}
+			
 		});
 
 	}
@@ -678,33 +749,12 @@ public class TelaPrincipal extends JFrame implements Runnable {
 		rdNone.setSelected(true);
 	}
 
-	@Override
-	public void run() {
-
-		while (preencheBarra) {
-			
-			pBarMescla.setValue(porcentagemBarra);
-			pBarMescla.setVisible(true);
-			
-		}
-	}
-	
-
-
 	public Integer getPorcentagemBarra() {
 		return porcentagemBarra;
 	}
 
 	public void setPorcentagemBarra(Integer porcentagemBarra) {
 		this.porcentagemBarra = porcentagemBarra;
-	}
-
-	public Thread getTrProgresso() {
-		return trProgresso;
-	}
-
-	public void setTrProgresso(Thread trProgresso) {
-		this.trProgresso = trProgresso;
 	}
 
 	private TelaPrincipal getTela() {
@@ -719,5 +769,12 @@ public class TelaPrincipal extends JFrame implements Runnable {
 		this.preencheBarra = preencheBarra;
 	}
 
+	public BarraProgresso getBarraProgresso() {
+		return barraProgresso;
+	}
+
+	public void setBarraProgresso(BarraProgresso barraProgresso) {
+		this.barraProgresso = barraProgresso;
+	}
 
 }

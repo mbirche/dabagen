@@ -145,12 +145,13 @@ public class Gravador {
 			// Escrita das tuplas no arquivo
 			// Vamos escrever as tuplas no arquivo
 			
-			tela.getTrProgresso().start();
+			tela.getBarraProgresso().start();
+			tela.getBarraProgresso().setContinua(true);
 			
 
 			for (int i = 0; i < totalTuplas; i++) {
 
-				tela.setPorcentagemBarra((int)(100 * i) / totalTuplas);
+				tela.getBarraProgresso().setPorcentagem((int)(100 * i) / totalTuplas);
 				
 				
 				iVal1 = iVal2 = 0;
@@ -213,9 +214,8 @@ public class Gravador {
 			e.printStackTrace();
 		}
 		
-		tela.setPorcentagemBarra(0);
-		tela.setPreencheBarra(false);
-		tela.getTrProgresso().interrupt();
+		tela.getBarraProgresso().setPorcentagem(100);
+		tela.getBarraProgresso().setContinua(false);
 	}
 
 	/**
