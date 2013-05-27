@@ -4,6 +4,7 @@ public class Dimensao {
 
 	private Integer indice;
 	private Integer cardinalidade;
+	private Integer arquivoDeOrigem;
 
 	public Integer getCardinalidade() {
 		return cardinalidade;
@@ -19,6 +20,14 @@ public class Dimensao {
 
 	public void setIndice(Integer indice) {
 		this.indice = indice;
+	}
+
+	public Integer getArquivoDeOrigem() {
+		return arquivoDeOrigem;
+	}
+
+	public void setArquivoDeOrigem(Integer arquivoDeOrigem) {
+		this.arquivoDeOrigem = arquivoDeOrigem;
 	}
 
 }

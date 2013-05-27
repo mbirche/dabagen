@@ -1,48 +1,51 @@
 package controle;
 
-import javax.swing.JProgressBar;
 
-import visao.TelaPrincipal;
+public class BarraProgresso implements Runnable {
 
-public class BarraProgresso extends Thread {
-
-	private JProgressBar barra;
-	private Integer porcentagem;
+	private Integer tuplaAtual;
+	private Integer totalTuplas;
 	private Boolean continua;
-	TelaPrincipal tela;
+	private Gravador gravador;
 
-	public BarraProgresso(JProgressBar barra, TelaPrincipal tela) {
-		this.barra = barra;
-		porcentagem = 0;
+	public BarraProgresso(Gravador gravador) {
+
+		tuplaAtual = 0;
+		totalTuplas = 0;
 		continua = true;
-		this.tela = tela;
+		this.gravador = gravador;
 	}
 
 	@Override
 	public void run() {
 		while (continua) {
-			barra.setValue(porcentagem);
 			
-			tela.repaint();
-			
+			gravador.atualizaTxtStatus(tuplaAtual, totalTuplas);
+
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(10);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Thread.currentThread().interrupt();
 			}
 		}
 		
-		barra.setValue(porcentagem);
-
 	}
 
-	public Integer getPorcentagem() {
-		return porcentagem;
+	public Integer getTuplaAtual() {
+		return tuplaAtual;
 	}
 
-	public void setPorcentagem(Integer porcentagem) {
-		this.porcentagem = porcentagem;
+	public void setTuplaAtual(Integer tuplaAtual) {
+		this.tuplaAtual = tuplaAtual;
+	}
+
+	public Integer getTotalTuplas() {
+		return totalTuplas;
+	}
+
+	public void setTotalTuplas(Integer totalTuplas) {
+		this.totalTuplas = totalTuplas;
 	}
 
 	public Boolean getContinua() {

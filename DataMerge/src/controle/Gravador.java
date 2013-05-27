@@ -1,18 +1,25 @@
 package controle;
 
+import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import modelo.Dimensao;
 import modelo.EstruturaArquivo;
 import modelo.Tupla;
 import visao.TelaPrincipal;
 
-public class Gravador {
+public class Gravador extends JFrame {
 
 	private File arquivo1;
 	private File arquivo2;
@@ -22,9 +29,47 @@ public class Gravador {
 	private EstruturaArquivo estrutArq2;
 	private EstruturaArquivo novaEstrutura;
 	List<Dimensao> novaListaDimensoes;
+	private JPanel statusMerge;
+	private JLabel lblStatus;
+	private String infoStatus;
+	private int tuplaAtual;
+	private int totalTuplasParaGravação;
+	private Thread threadProgresso;
+
+	private BarraProgresso barraProgresso;
 
 	public Gravador() {
+
+		setSize(new Dimension(400, 200));
 		caminhoArquivo = Constantes.caminhoArquivo;
+		statusMerge = new JPanel();
+
+		infoStatus = "Tuplas a serem gravas: \n" + totalTuplasParaGravação
+				+ "Tupla / Total de tuplas: " + tuplaAtual + " / "
+				+ totalTuplasParaGravação;
+		lblStatus = new JLabel(infoStatus);
+
+		statusMerge.add(lblStatus);
+		add(statusMerge);
+
+		this.setTitle("Estado da gravação");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setVisible(false);
+
+	}
+
+	public void atualizaTxtStatus(Integer tuplaAtual, Integer totalTuplas) {
+
+		this.tuplaAtual = tuplaAtual;
+		this.totalTuplasParaGravação = totalTuplas;
+
+		infoStatus = "Tupla / Total de tuplas: " + tuplaAtual + " / "
+				+ totalTuplasParaGravação;
+		System.out.println(infoStatus);
+		lblStatus.setText(infoStatus);
+
+		statusMerge.revalidate();
+
 	}
 
 	/**
@@ -53,7 +98,7 @@ public class Gravador {
 	 * @throws FileNotFoundException
 	 *             Lança excessão se houver problemas na abertura dos arquivos
 	 */
-	public void mergeHorizontal(File arquivo1, File arquivo2,
+	public File mergeHorizontal(File arquivo1, File arquivo2,
 			Boolean temCabecalho, Boolean temIndice, TelaPrincipal tela)
 			throws FileNotFoundException {
 
@@ -63,6 +108,7 @@ public class Gravador {
 		BufferedLeitor leitor1 = new BufferedLeitor(arquivo1);
 		BufferedLeitor leitor2 = new BufferedLeitor(arquivo2);
 		int iVal1, iVal2, numVal1, numVal2;
+		Dimensao dimensao;
 
 		estrutArq1 = leitor1.getEstrutura();
 		estrutArq2 = leitor2.getEstrutura();
@@ -87,39 +133,39 @@ public class Gravador {
 
 		// O arquivo terá cabeçalho?
 
-		if (temCabecalho) {
-			novaListaDimensoes = new ArrayList<Dimensao>();
-			novaEstrutura = new EstruturaArquivo();
+		novaListaDimensoes = new ArrayList<Dimensao>();
+		novaEstrutura = new EstruturaArquivo();
 
-			novaEstrutura.setNumeroTuplas(estrutArq1.getNumeroTuplas());
+		novaEstrutura.setNumeroTuplas(estrutArq1.getNumeroTuplas());
 
-			// Vamos escrever a primeira linha
+		Random rdm = new Random();
 
-			for (int i = 0; i < totalDimensoes; i++) {
+		for (int i = 0; i < totalDimensoes; i++) {
 
-				if (vezArq1 && iVal1 < numVal1) {
-					novaListaDimensoes
-							.add(estrutArq1.getDimensoes().get(iVal1));
-					iVal1++;
-					if (iVal2 < numVal2) {
-						vezArq1 = false;
-						continue;
-					}
-				}
-
-				if (!vezArq1 && iVal2 < numVal2) {
-					novaListaDimensoes
-							.add(estrutArq2.getDimensoes().get(iVal2));
-					iVal2++;
-					if (iVal1 < numVal1) {
-						vezArq1 = true;
-						continue;
-					}
-				}
+			if (iVal1 < numVal1 && iVal2 < numVal2) {
+				vezArq1 = rdm.nextBoolean();
+			} else if (iVal1 >= numVal1) {
+				vezArq1 = false;
+			} else if (iVal2 >= numVal2) {
+				vezArq1 = true;
 			}
 
-			novaEstrutura.setDimensoes(novaListaDimensoes);
+			if (vezArq1 && iVal1 < numVal1) {
+				dimensao = estrutArq1.getDimensoes().get(iVal1);
+				dimensao.setArquivoDeOrigem(1);
+				novaListaDimensoes.add(dimensao);
+				iVal1++;
+			}
+
+			if (!vezArq1 && iVal2 < numVal2) {
+				dimensao = estrutArq2.getDimensoes().get(iVal2);
+				dimensao.setArquivoDeOrigem(2);
+				novaListaDimensoes.add(dimensao);
+				iVal2++;
+			}
 		}
+
+		novaEstrutura.setDimensoes(novaListaDimensoes);
 
 		try {
 
@@ -144,16 +190,25 @@ public class Gravador {
 
 			// Escrita das tuplas no arquivo
 			// Vamos escrever as tuplas no arquivo
-			
-			tela.getBarraProgresso().start();
-			tela.getBarraProgresso().setContinua(true);
-			
+
+			// tela.getBarraProgresso().start();
+			// tela.getBarraProgresso().setContinua(true);
+
+			barraProgresso = new BarraProgresso(this);
+
+			threadProgresso = new Thread(barraProgresso);
+
+			barraProgresso.setTuplaAtual(0);
+			barraProgresso.setTotalTuplas(totalTuplas);
+
+			// threadProgresso.start();
 
 			for (int i = 0; i < totalTuplas; i++) {
 
-				tela.getBarraProgresso().setPorcentagem((int)(100 * i) / totalTuplas);
-				
-				
+				// barraProgresso.setTuplaAtual(i + 1);
+
+				atualizaTxtStatus(i + 1, totalTuplas);
+
 				iVal1 = iVal2 = 0;
 				vezArq1 = true;
 
@@ -172,27 +227,45 @@ public class Gravador {
 				// Se não for preciso fazer nada com o vetor de valores da
 				// tupla, é possivel mudarmos para ganharmos
 				// performance gravando direto no StringBuffer
-				for (int j = 0; j < totalDimensoes; j++) {
 
-					if (vezArq1 && iVal1 < numVal1) {
-						novosValores[j] = tupla1.getValores()[iVal1];
-						iVal1++;
-						if (iVal2 < numVal2) {
-							vezArq1 = false;
-							continue;
+				try {
+					for (int j = 0; j < totalDimensoes; j++) {
+						// try {
+						if (novaEstrutura.getDimensoes().get(j)
+								.getArquivoDeOrigem().equals(1)) {
+
+							novosValores[j] = tupla1.getValores()[iVal1];
+							iVal1++;
+
+						} else if (novaEstrutura.getDimensoes().get(j)
+								.getArquivoDeOrigem().equals(2)) {
+
+							novosValores[j] = tupla2.getValores()[iVal2];
+							iVal2++;
 						}
 					}
-
-					if (!vezArq1 && iVal2 < numVal2) {
-						novosValores[j] = tupla2.getValores()[iVal2];
-						iVal2++;
-						if (iVal1 < numVal1) {
-							vezArq1 = true;
-							continue;
-						}
-					}
-
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
+
+				//
+				// if (vezArq1 && iVal1 < numVal1) {
+				// novosValores[j] = tupla1.getValores()[iVal1];
+				// iVal1++;
+				// if (iVal2 < numVal2) {
+				// vezArq1 = false;
+				// continue;
+				// }
+				// }
+				//
+				// if (!vezArq1 && iVal2 < numVal2) {
+				// novosValores[j] = tupla2.getValores()[iVal2];
+				// iVal2++;
+				// if (iVal1 < numVal1) {
+				// vezArq1 = true;
+				// continue;
+				// }
+				// }
 
 				for (int k = 0; k < novosValores.length; k++) {
 					if (temIndice)
@@ -213,9 +286,16 @@ public class Gravador {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		tela.getBarraProgresso().setPorcentagem(100);
-		tela.getBarraProgresso().setContinua(false);
+
+		try {
+			Thread.sleep(200);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		barraProgresso.setTuplaAtual(totalTuplas);
+		barraProgresso.setContinua(false);
+
+		return novoArquivo;
 	}
 
 	/**
@@ -242,8 +322,8 @@ public class Gravador {
 	 *             Lança excessão se houver problemas na abertura dos arquivos
 	 */
 
-	public void mergeVertical(File arquivo1, File arquivo2,
-			Boolean temCabecalho, Boolean temIndice)
+	public File mergeVertical(File arquivo1, File arquivo2,
+			Boolean temCabecalho, Boolean temIndice, TelaPrincipal tela)
 			throws FileNotFoundException {
 
 		BufferedLeitor leitor1 = new BufferedLeitor(arquivo1);
@@ -254,7 +334,6 @@ public class Gravador {
 
 		Integer totalTuplas = estrutArq1.getNumeroTuplas()
 				+ estrutArq2.getNumeroTuplas();
-		
 
 		StringBuffer primeiraLinha;
 		StringBuffer novaTupla;
@@ -268,12 +347,24 @@ public class Gravador {
 
 		novoArquivo = new File(caminhoArquivo);
 
+		Dimensao dimensao;
+		List<Dimensao> listaDimensoes = new ArrayList<Dimensao>();
+
 		if (temCabecalho) {
 			novaListaDimensoes = new ArrayList<Dimensao>();
 			novaEstrutura = new EstruturaArquivo();
 
 			novaEstrutura.setNumeroTuplas(totalTuplas);
-			novaEstrutura.setDimensoes(estrutArq1.getDimensoes());
+			for (int i = 0; i < estrutArq1.getDimensoes().size(); i++) {
+
+				dimensao = new Dimensao();
+				dimensao.setCardinalidade(Math.max(estrutArq1.getDimensoes()
+						.get(i).getCardinalidade(), estrutArq2.getDimensoes()
+						.get(i).getCardinalidade()));
+
+				listaDimensoes.add(dimensao);
+			}
+			novaEstrutura.setDimensoes(listaDimensoes);
 		}
 		try {
 
@@ -300,7 +391,20 @@ public class Gravador {
 			// Vamos escrever as tuplas.
 			Integer indice = 1;
 
+			barraProgresso = new BarraProgresso(this);
+
+			threadProgresso = new Thread(barraProgresso);
+
+			barraProgresso.setTuplaAtual(0);
+			barraProgresso.setTotalTuplas(totalTuplas);
+
+			// threadProgresso.start();
+
 			for (int i = 0; i < estrutArq1.getNumeroTuplas(); i++) {
+
+				// barraProgresso.setTuplaAtual(i + 1);
+
+				atualizaTxtStatus(i + 1, totalTuplas);
 
 				tupla = leitor1.obterTupla();
 				novaTupla = new StringBuffer();
@@ -321,6 +425,12 @@ public class Gravador {
 				gravador.newLine();
 			}
 			for (int i = 0; i < estrutArq2.getNumeroTuplas(); i++) {
+
+				// barraProgresso.setTuplaAtual(estrutArq1.getNumeroTuplas() + i
+				// + 1);
+
+				atualizaTxtStatus(estrutArq1.getNumeroTuplas() + i + 1,
+						totalTuplas);
 
 				tupla = leitor2.obterTupla();
 				novaTupla = new StringBuffer();
@@ -345,7 +455,14 @@ public class Gravador {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		try {
+			Thread.sleep(200);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
+		barraProgresso.setContinua(false);
+		return novoArquivo;
 	}
 
 	/***
@@ -384,7 +501,7 @@ public class Gravador {
 				caminho += "_c";
 			if (temIndice)
 				caminho += "_i";
-			if(!temCabecalho && !temIndice)
+			if (!temCabecalho && !temIndice)
 				caminho += "_";
 
 			novoArquivo = new File(caminho);
@@ -406,10 +523,14 @@ public class Gravador {
 				gravador.write(primeiraLinha.toString());
 				gravador.newLine();
 			}
-			
-			Integer indice = 1;
 
-			for (int i = 0; i < estrutura.getNumeroTuplas(); i++) {
+			Integer indice = 1;
+			Integer totalTuplasEd = estrutura.getNumeroTuplas();
+
+			for (int i = 0; i < totalTuplasEd; i++) {
+
+				System.out.println("Editando linha " + (i + 1) + " / "
+						+ totalTuplasEd);
 
 				tupla = leitor.obterTupla();
 				novaTupla = new StringBuffer();
@@ -429,8 +550,10 @@ public class Gravador {
 				gravador.write(novaTupla.toString());
 				gravador.newLine();
 			}
-			
+
 			gravador.close();
+
+			JOptionPane.showMessageDialog(null, "Arquivo editado com sucesso");
 
 		} catch (Exception e) {
 

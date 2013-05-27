@@ -1,5 +1,6 @@
 package visao;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -9,26 +10,33 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import modelo.EstruturaArquivo;
+import modelo.MyFile;
 import controle.ArquivoDAO;
-import controle.BarraProgresso;
 import controle.BufferedLeitor;
 import controle.Conexao;
 import controle.Gravador;
@@ -57,9 +65,16 @@ public class TelaPrincipal extends JFrame {
 	private JTextArea txtArArq1;
 	private JTextArea txtArArq2;
 	private JTextArea txtArPossivel;
+	private JTextArea txtArStatusMerge;
+
+	private JList<MyFile> listaArquivos;
+	private DefaultListModel<MyFile> modeloListaArquivo;
 
 	private JButton btnArquivo1;
 	private JButton btnArquivo2;
+	private JButton btnProcurarArquivoLista;
+	private JButton btnRemoverArquivoLista;
+
 	private JButton btnMesclar;
 	private JButton btnEditarArquivo;
 	private JButton btnBDArquivo;
@@ -86,10 +101,10 @@ public class TelaPrincipal extends JFrame {
 	private JProgressBar pBarEdição;
 	private JProgressBar pBarBD;
 
-	private BarraProgresso barraProgresso;
-
 	private LayoutManager layoutArquivos;
 	private LayoutManager layoutAviso;
+
+	private JScrollPane spnlListaArquivos;
 
 	private JPanel pnlTopo;
 	private JPanel pnlCentro;
@@ -98,6 +113,8 @@ public class TelaPrincipal extends JFrame {
 	private JPanel pnlArquivos;
 	private JPanel pnlArquivo1;
 	private JPanel pnlArquivo2;
+	private JPanel pnlListaArquivos;
+	private JPanel pnlBotoesLista;
 	private JPanel pnlOpcaoMerge;
 	private JPanel pnlOpcoesEstrutura;
 	private JPanel pnlAvisos;
@@ -109,6 +126,7 @@ public class TelaPrincipal extends JFrame {
 	private File arquivo2;
 	private File arquivoEdit;
 	private File arquivoBD;
+	private File arquivoAdicionado;
 
 	private Boolean temArquivos;
 	private Boolean ePossivel;
@@ -119,6 +137,8 @@ public class TelaPrincipal extends JFrame {
 	private Integer porcentagemBarra;
 
 	public TelaPrincipal() {
+
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		temArquivos = false;
 		ePossivel = false;
@@ -149,9 +169,17 @@ public class TelaPrincipal extends JFrame {
 		txtArArq2 = new JTextArea("Número de tuplas:\n"
 				+ "Número de dimensões:", 2, 30);
 		txtArPossivel = new JTextArea(3, 30);
+		txtArStatusMerge = new JTextArea(2, 30);
+
+		modeloListaArquivo = new DefaultListModel<MyFile>();
+		listaArquivos = new JList<MyFile>(modeloListaArquivo);
+		spnlListaArquivos = new JScrollPane(listaArquivos);
 
 		btnArquivo1 = new JButton("Procurar");
 		btnArquivo2 = new JButton("Procurar");
+
+		btnProcurarArquivoLista = new JButton("Adicionar arquivo");
+		btnRemoverArquivoLista = new JButton("Remover arquivo");
 		btnMesclar = new JButton("Mesclar");
 		btnMesclar.setEnabled(ePossivel);
 		btnEditarArquivo = new JButton("Editar");
@@ -194,17 +222,20 @@ public class TelaPrincipal extends JFrame {
 
 		pnlTopo = new JPanel(new GridLayout(0, 2));
 		pnlTopo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		pnlTopo.setPreferredSize(new Dimension(300, 600));
+		pnlTopo.setPreferredSize(new Dimension(200, 450));
 
 		pnlCentro = new JPanel();
 		pnlCentro.setBorder(BorderFactory.createLineBorder(Color.RED));
 
 		pnlBaixo = new JPanel();
 		pnlBaixo.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+		pnlBaixo.setPreferredSize(new Dimension(200, 100));
 
 		pnlArquivos = new JPanel(layoutArquivos);
 		pnlArquivo1 = new JPanel();
 		pnlArquivo2 = new JPanel();
+		pnlListaArquivos = new JPanel(new GridLayout(0, 1));
+		pnlBotoesLista = new JPanel();
 		pnlOpcaoMerge = new JPanel();
 		pnlOpcoesEstrutura = new JPanel(new GridLayout(0, 3));
 
@@ -220,6 +251,12 @@ public class TelaPrincipal extends JFrame {
 		pnlArquivo2.add(txtArquivo2);
 		pnlArquivo2.add(btnArquivo2);
 
+		pnlBotoesLista.add(btnProcurarArquivoLista);
+		pnlBotoesLista.add(btnRemoverArquivoLista);
+
+		pnlListaArquivos.add(spnlListaArquivos);
+		pnlListaArquivos.add(pnlBotoesLista);
+
 		pnlOpcaoMerge.add(rdMergeHorizontal);
 		pnlOpcaoMerge.add(rdMergeVertical);
 
@@ -233,19 +270,22 @@ public class TelaPrincipal extends JFrame {
 
 		pnlOpcoesEstrutura.add(btnMesclar);
 
-		pnlArquivos.add(pnlArquivo1);
-		pnlArquivos.add(pnlArquivo2);
+		// pnlArquivos.add(pnlArquivo1);
+		// pnlArquivos.add(pnlArquivo2);
+		pnlArquivos.add(pnlListaArquivos);
+
 		pnlArquivos.add(pnlOpcaoMerge);
 		pnlArquivos.add(pnlOpcoesEstrutura);
 
 		pnlInfoArq1.add(txtArArq1);
-		pnlInfoArq2.add(txtArArq2);
+		// pnlInfoArq2.add(txtArArq2);
 		pnlPossivel.add(txtArPossivel);
 
 		pnlAvisos.add(pnlInfoArq1);
 		pnlAvisos.add(pnlInfoArq2);
 		pnlAvisos.add(pnlPossivel);
 		pnlAvisos.add(pBarMescla);
+		pnlAvisos.add(txtArStatusMerge);
 
 		pnlCentro.add(lblEditarArquivo);
 		pnlCentro.add(txtEditArquivo);
@@ -265,15 +305,27 @@ public class TelaPrincipal extends JFrame {
 		pnlBaixo.add(btnBDArquivo);
 		pnlBaixo.add(btnTesteVelocidade);
 
-		setLayout(new GridLayout(0, 1));
+		setLayout(new BorderLayout());
 
 		pnlTopo.add(pnlArquivos);
 		pnlTopo.add(pnlAvisos);
 
-		add(pnlTopo);
-		add(pnlCentro);
-		add(pnlBaixo);
+		add(pnlTopo, BorderLayout.NORTH);
+		add(pnlCentro, BorderLayout.CENTER);
+		add(pnlBaixo, BorderLayout.SOUTH);
 
+		listaArquivos.addListSelectionListener(new ListSelectionListener() {
+
+			@Override
+			public void valueChanged(ListSelectionEvent arg0) {
+				MyFile myFile = listaArquivos.getSelectedValue();
+				if (myFile != null)
+					montaInfoArq1(myFile.getFile());
+				else
+					limpaInfoArq1();
+
+			}
+		});
 		txtBDArquivo.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -491,11 +543,65 @@ public class TelaPrincipal extends JFrame {
 					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 						caminho = chooser.getSelectedFile().getAbsolutePath();
 
-						gravador.editarArquivo(arquivoEdit,
-								ckCabecalhoEdit.isSelected(),
-								ckIndiceEdit.isSelected(), caminho);
+					}else {
+						caminho = null;
 					}
 				}
+				gravador.editarArquivo(arquivoEdit,
+						ckCabecalhoEdit.isSelected(),
+						ckIndiceEdit.isSelected(), caminho);
+			}
+		});
+
+		btnRemoverArquivoLista.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!listaArquivos.isSelectionEmpty()) {
+					Integer index = listaArquivos.getSelectedIndex();
+					modeloListaArquivo.remove(index);
+
+				} else {
+					JOptionPane.showMessageDialog(null,
+							"Selecione um arquivo para removê-lo");
+				}
+
+				ePossivel = false;
+				strPossibilidade = "";
+				atualizaPossibilidade(strPossibilidade);
+				atualizaBotoes();
+				limpaOpcoesMerge();
+
+			}
+		});
+		btnProcurarArquivoLista.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser(Util
+						.getCaminhoVisitado());
+				chooser.showOpenDialog(null);
+				arquivoAdicionado = chooser.getSelectedFile();
+
+				if (arquivoAdicionado != null) {
+					Util.setCaminhoVisitado(arquivoAdicionado.getParentFile());
+
+					modeloListaArquivo
+							.addElement(new MyFile(arquivoAdicionado));
+					listaArquivos.setSelectedIndex(modeloListaArquivo.size() - 1);
+					montaInfoArq1(arquivoAdicionado);
+				}
+
+				if (modeloListaArquivo.size() > 1) {
+					temArquivos = true;
+				}
+
+				ePossivel = false;
+				strPossibilidade = "";
+				atualizaPossibilidade(strPossibilidade);
+				atualizaBotoes();
+				limpaOpcoesMerge();
+
 			}
 		});
 		btnArquivo1.addActionListener(new ActionListener() {
@@ -551,23 +657,53 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Leitor leitor = new Leitor();
-				EstruturaArquivo estrtArq1 = leitor
-						.obterEstruturaArquivo(arquivo1);
-				EstruturaArquivo estrtArq2 = leitor
-						.obterEstruturaArquivo(arquivo2);
 
-				ePossivel = false;
+				List<EstruturaArquivo> estruturas = new ArrayList<EstruturaArquivo>();
 
-				if (estrtArq1.getNumeroTuplas().equals(
-						estrtArq2.getNumeroTuplas())) {
-					ePossivel = true;
+				for (int i = 0; i < modeloListaArquivo.size(); i++) {
+
+					estruturas.add(leitor
+							.obterEstruturaArquivo(modeloListaArquivo.get(i)
+									.getFile()));
+				}
+
+				Integer numeroTuplas = estruturas.get(0).getNumeroTuplas();
+
+				ePossivel = true;
+
+				for (EstruturaArquivo est : estruturas) {
+					if (!est.getNumeroTuplas().equals(numeroTuplas))
+						ePossivel = false;
+				}
+				if (ePossivel) {
 					strPossibilidade = "A mescla é possível.";
 					atualizaPossibilidade(strPossibilidade);
 				} else {
 					strPossibilidade = "Não é possivel fazer a mescla horizontal de arquivos\nque possuem número de tuplas diferentes.";
 					atualizaPossibilidade(strPossibilidade);
 				}
+
 				atualizaBotoes();
+
+				// Leitor leitor = new Leitor();
+				// EstruturaArquivo estrtArq1 = leitor
+				// .obterEstruturaArquivo(arquivo1);
+				// EstruturaArquivo estrtArq2 = leitor
+				// .obterEstruturaArquivo(arquivo2);
+				//
+				// ePossivel = false;
+				//
+				// if (estrtArq1.getNumeroTuplas().equals(
+				// estrtArq2.getNumeroTuplas())) {
+				// ePossivel = true;
+				// strPossibilidade = "A mescla é possível.";
+				// atualizaPossibilidade(strPossibilidade);
+				// } else {
+				// strPossibilidade =
+				// "Não é possivel fazer a mescla horizontal de arquivos\nque possuem número de tuplas diferentes.";
+				// atualizaPossibilidade(strPossibilidade);
+				// }
+				// atualizaBotoes();
 			}
 		});
 
@@ -575,23 +711,57 @@ public class TelaPrincipal extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Leitor leitor = new Leitor();
-				EstruturaArquivo estrtArq1 = leitor
-						.obterEstruturaArquivo(arquivo1);
-				EstruturaArquivo estrtArq2 = leitor
-						.obterEstruturaArquivo(arquivo2);
 
-				ePossivel = false;
-				if (estrtArq1.getDimensoes().size() == estrtArq2.getDimensoes()
-						.size()) {
-					ePossivel = true;
+				Leitor leitor = new Leitor();
+
+				List<EstruturaArquivo> estruturas = new ArrayList<EstruturaArquivo>();
+
+				for (int i = 0; i < modeloListaArquivo.size(); i++) {
+
+					estruturas.add(leitor
+							.obterEstruturaArquivo(modeloListaArquivo.get(i)
+									.getFile()));
+				}
+
+				Integer numeroDimensoes = estruturas.get(0).getDimensoes()
+						.size();
+
+				ePossivel = true;
+
+				for (EstruturaArquivo est : estruturas) {
+					if (!numeroDimensoes.equals(est.getDimensoes().size()))
+						ePossivel = false;
+				}
+
+				if (ePossivel) {
 					strPossibilidade = "A mescla é possível.";
 					atualizaPossibilidade(strPossibilidade);
 				} else {
 					strPossibilidade = "Não é possivel fazer a mescla vertical de arquivos \nque possuem número de dimensões diferentes.";
 					atualizaPossibilidade(strPossibilidade);
 				}
+
 				atualizaBotoes();
+
+				// Leitor leitor = new Leitor();
+				// EstruturaArquivo estrtArq1 = leitor
+				// .obterEstruturaArquivo(arquivo1);
+				// EstruturaArquivo estrtArq2 = leitor
+				// .obterEstruturaArquivo(arquivo2);
+				//
+				// ePossivel = false;
+				// if (estrtArq1.getDimensoes().size() ==
+				// estrtArq2.getDimensoes()
+				// .size()) {
+				// ePossivel = true;
+				// strPossibilidade = "A mescla é possível.";
+				// atualizaPossibilidade(strPossibilidade);
+				// } else {
+				// strPossibilidade =
+				// "Não é possivel fazer a mescla vertical de arquivos \nque possuem número de dimensões diferentes.";
+				// atualizaPossibilidade(strPossibilidade);
+				// }
+				// atualizaBotoes();
 
 			}
 		});
@@ -610,25 +780,77 @@ public class TelaPrincipal extends JFrame {
 					JFileChooser chooser = new JFileChooser(Util
 							.getCaminhoVisitado());
 					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-						caminho = chooser.getSelectedFile()
-								.getAbsolutePath();
+						caminho = chooser.getSelectedFile().getAbsolutePath();
 
-					if (ckCriarArquivo1.isSelected()) {
-						Gravador gravador = new Gravador();
-						
+						if (ckCriarArquivo1.isSelected()) {
+							Gravador gravador = new Gravador();
+
 							gravador.setCaminhoArquivo(caminho + "1");
 
 							if (rdMergeHorizontal.isSelected()) {
 								try {
 
-									barraProgresso = new BarraProgresso(
-											pBarMescla, getTela());
-									barraProgresso.setPorcentagem(0);
-									pnlAvisos.repaint();
+									File resultadoMerge;
+									File parcial;
 
-									gravador.mergeHorizontal(arquivo1,
-											arquivo2, ckCabecalho.isSelected(),
-											ckIndice.isSelected(), getTela());
+									if (modeloListaArquivo.size() == 2) {
+										resultadoMerge = gravador
+												.mergeHorizontal(
+														modeloListaArquivo.get(
+																0).getFile(),
+														modeloListaArquivo.get(
+																1).getFile(),
+														ckCabecalho
+																.isSelected(),
+														ckIndice.isSelected(),
+														getTela());
+									} else {
+
+										resultadoMerge = gravador
+												.mergeHorizontal(
+														modeloListaArquivo.get(
+																0).getFile(),
+														modeloListaArquivo.get(
+																1).getFile(),
+														true, false, getTela());
+									}
+
+									for (int i = 2; i < modeloListaArquivo
+											.size(); i++) {
+
+										if (i == modeloListaArquivo.size() - 1)
+											gravador.setCaminhoArquivo(caminho
+													+ "1");
+										else
+											gravador.setCaminhoArquivo(caminho
+													+ "_1_" + i);
+
+										if (i == modeloListaArquivo.getSize() - 1) {
+
+											parcial = gravador.mergeHorizontal(
+													resultadoMerge,
+													modeloListaArquivo.get(i)
+															.getFile(),
+													ckCabecalho.isSelected(),
+													ckIndice.isSelected(),
+													getTela());
+
+											resultadoMerge = parcial;
+
+										} else {
+											parcial = gravador.mergeHorizontal(
+													resultadoMerge,
+													modeloListaArquivo.get(1)
+															.getFile(), true,
+													false, getTela());
+
+											resultadoMerge = parcial;
+										}
+									}
+
+									// gravador.mergeHorizontal(arquivo1,
+									// arquivo2, ckCabecalho.isSelected(),
+									// ckIndice.isSelected(), getTela());
 								} catch (FileNotFoundException e) {
 									JOptionPane
 											.showMessageDialog(null,
@@ -638,9 +860,70 @@ public class TelaPrincipal extends JFrame {
 
 							if (rdMergeVertical.isSelected()) {
 								try {
-									gravador.mergeVertical(arquivo1, arquivo2,
-											ckCabecalho.isSelected(),
-											ckIndice.isSelected());
+
+									File resultadoMerge;
+									File parcial;
+
+									if (modeloListaArquivo.size() == 2) {
+										resultadoMerge = gravador
+												.mergeVertical(
+														modeloListaArquivo.get(
+																0).getFile(),
+														modeloListaArquivo.get(
+																1).getFile(),
+														ckCabecalho
+																.isSelected(),
+														ckIndice.isSelected(),
+														getTela());
+									} else {
+
+										resultadoMerge = gravador
+												.mergeVertical(
+														modeloListaArquivo.get(
+																0).getFile(),
+														modeloListaArquivo.get(
+																1).getFile(),
+														true, false, getTela());
+									}
+
+									for (int i = 2; i < modeloListaArquivo
+											.size(); i++) {
+
+										if (i == modeloListaArquivo.size() - 1)
+											gravador.setCaminhoArquivo(caminho
+													+ "1");
+										else
+											gravador.setCaminhoArquivo(caminho
+													+ "_1_" + i);
+
+										if (i == modeloListaArquivo.getSize() - 1) {
+
+											parcial = gravador.mergeVertical(
+													resultadoMerge,
+													modeloListaArquivo.get(i)
+															.getFile(),
+													ckCabecalho.isSelected(),
+													ckIndice.isSelected(),
+													getTela());
+
+											resultadoMerge = parcial;
+
+										} else {
+											parcial = gravador.mergeVertical(
+													resultadoMerge,
+													modeloListaArquivo.get(1)
+															.getFile(), true,
+													false, getTela());
+
+											resultadoMerge = parcial;
+										}
+									}
+
+									// gravador.mergeVertical(arquivo1,
+									// arquivo2,
+									// ckCabecalho.isSelected(),
+									// ckIndice.isSelected());
+
 								} catch (FileNotFoundException e) {
 									JOptionPane
 											.showMessageDialog(null,
@@ -653,53 +936,164 @@ public class TelaPrincipal extends JFrame {
 					}
 					if (ckCriarArquivo2.isSelected()) {
 						Gravador gravador2 = new Gravador();
-												
+
 						gravador2.setCaminhoArquivo(caminho + "2");
 
-							if (rdMergeHorizontal.isSelected()) {
-								try {
+						if (rdMergeHorizontal.isSelected()) {
+							try {
 
-									barraProgresso = new BarraProgresso(
-											pBarMescla, getTela());
-									barraProgresso.setPorcentagem(0);
-									pnlAvisos.repaint();
+								File resultadoMerge;
+								File parcial;
 
-									gravador2.mergeHorizontal(arquivo1,
-											arquivo2, ckCabecalho2.isSelected(),
-											ckIndice2.isSelected(), getTela());
-								} catch (FileNotFoundException e) {
-									JOptionPane
-											.showMessageDialog(null,
-													"Problemas com o arquivo selecionado.");
+								if (modeloListaArquivo.size() == 2) {
+									resultadoMerge = gravador2
+											.mergeHorizontal(modeloListaArquivo
+													.get(0).getFile(),
+													modeloListaArquivo.get(1)
+															.getFile(),
+													ckCabecalho2.isSelected(),
+													ckIndice2.isSelected(),
+													getTela());
+								} else {
+
+									resultadoMerge = gravador2
+											.mergeHorizontal(modeloListaArquivo
+													.get(0).getFile(),
+													modeloListaArquivo.get(1)
+															.getFile(), true,
+													false, getTela());
 								}
+
+								for (int i = 2; i < modeloListaArquivo.size(); i++) {
+
+									if (i == modeloListaArquivo.size() - 1)
+										gravador2.setCaminhoArquivo(caminho
+												+ "2");
+									else
+										gravador2.setCaminhoArquivo(caminho
+												+ "_2_" + i);
+
+									if (i == modeloListaArquivo.getSize() - 1) {
+
+										parcial = gravador2.mergeHorizontal(
+												resultadoMerge,
+												modeloListaArquivo.get(i)
+														.getFile(),
+												ckCabecalho2.isSelected(),
+												ckIndice2.isSelected(),
+												getTela());
+
+										resultadoMerge = parcial;
+
+									} else {
+										parcial = gravador2.mergeHorizontal(
+												resultadoMerge,
+												modeloListaArquivo.get(1)
+														.getFile(), true,
+												false, getTela());
+
+										resultadoMerge = parcial;
+									}
+								}
+
+								// gravador.mergeHorizontal(arquivo1,
+								// arquivo2, ckCabecalho.isSelected(),
+								// ckIndice.isSelected(), getTela());
+							} catch (FileNotFoundException e) {
+								JOptionPane.showMessageDialog(null,
+										"Problemas com o arquivo selecionado.");
+							}
+						}
+
+						if (rdMergeVertical.isSelected()) {
+							try {
+
+								File resultadoMerge;
+								File parcial;
+
+								if (modeloListaArquivo.size() == 2) {
+									resultadoMerge = gravador2
+											.mergeVertical(modeloListaArquivo
+													.get(0).getFile(),
+													modeloListaArquivo.get(1)
+															.getFile(),
+													ckCabecalho2.isSelected(),
+													ckIndice2.isSelected(),
+													getTela());
+								} else {
+
+									resultadoMerge = gravador2
+											.mergeVertical(modeloListaArquivo
+													.get(0).getFile(),
+													modeloListaArquivo.get(1)
+															.getFile(), true,
+													false, getTela());
+								}
+
+								for (int i = 2; i < modeloListaArquivo.size(); i++) {
+
+									if (i == modeloListaArquivo.size() - 1)
+										gravador2.setCaminhoArquivo(caminho
+												+ "2");
+									else
+										gravador2.setCaminhoArquivo(caminho
+												+ "_2_" + i);
+
+									if (i == modeloListaArquivo.getSize() - 1) {
+
+										parcial = gravador2.mergeVertical(
+												resultadoMerge,
+												modeloListaArquivo.get(i)
+														.getFile(),
+												ckCabecalho2.isSelected(),
+												ckIndice2.isSelected(),
+												getTela());
+
+										resultadoMerge = parcial;
+
+									} else {
+										parcial = gravador2.mergeVertical(
+												resultadoMerge,
+												modeloListaArquivo.get(1)
+														.getFile(), true,
+												false, getTela());
+
+										resultadoMerge = parcial;
+									}
+								}
+
+								// gravador.mergeVertical(arquivo1,
+								// arquivo2,
+								// ckCabecalho.isSelected(),
+								// ckIndice.isSelected());
+
+							} catch (FileNotFoundException e) {
+								JOptionPane.showMessageDialog(null,
+										"Problemas com o arquivo selecionado.");
 							}
 
-							if (rdMergeVertical.isSelected()) {
-								try {
-									gravador2.mergeVertical(arquivo1, arquivo2,
-											ckCabecalho2.isSelected(),
-											ckIndice2.isSelected());
-								} catch (FileNotFoundException e) {
-									JOptionPane
-											.showMessageDialog(null,
-													"Problemas com o arquivo selecionado.");
-								}
-							}
-
-							
 						}
 
 					}
 
-				JOptionPane.showMessageDialog(null, "O(s) arquivo(s) foi(ram) salvo(s) com sucesso!");
 				}
-			
+
+				JOptionPane.showMessageDialog(null,
+						"O(s) arquivo(s) foi(ram) salvo(s) com sucesso!");
+
+			}
+
 		});
 
 	}
 
 	private void atualizaPossibilidade(String strPossibilidade) {
 		txtArPossivel.setText(strPossibilidade);
+	}
+
+	private void limpaInfoArq1() {
+		String info = "Número de tuplas: \n" + "Número de dimensões: ";
+		txtArArq1.setText(info);
 	}
 
 	private void montaInfoArq1(File arquivo1) {
@@ -769,12 +1163,12 @@ public class TelaPrincipal extends JFrame {
 		this.preencheBarra = preencheBarra;
 	}
 
-	public BarraProgresso getBarraProgresso() {
-		return barraProgresso;
+	public JTextArea getTxtArStatusMerge() {
+		return txtArStatusMerge;
 	}
 
-	public void setBarraProgresso(BarraProgresso barraProgresso) {
-		this.barraProgresso = barraProgresso;
+	public void setTxtArStatusMerge(JTextArea txtArStatusMerge) {
+		this.txtArStatusMerge = txtArStatusMerge;
 	}
 
 }
