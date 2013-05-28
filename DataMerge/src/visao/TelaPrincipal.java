@@ -40,7 +40,6 @@ import controle.ArquivoDAO;
 import controle.BufferedLeitor;
 import controle.Conexao;
 import controle.Gravador;
-import controle.Leitor;
 import controle.TestesVelocidade;
 import controle.Util;
 
@@ -543,7 +542,7 @@ public class TelaPrincipal extends JFrame {
 					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
 						caminho = chooser.getSelectedFile().getAbsolutePath();
 
-					}else {
+					} else {
 						caminho = null;
 					}
 				}
@@ -656,15 +655,21 @@ public class TelaPrincipal extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				Leitor leitor = new Leitor();
+
+				BufferedLeitor bfLeitor = null;
 
 				List<EstruturaArquivo> estruturas = new ArrayList<EstruturaArquivo>();
 
 				for (int i = 0; i < modeloListaArquivo.size(); i++) {
 
-					estruturas.add(leitor
-							.obterEstruturaArquivo(modeloListaArquivo.get(i)
-									.getFile()));
+					try {
+						bfLeitor = new BufferedLeitor(modeloListaArquivo.get(i)
+								.getFile());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+					estruturas.add(bfLeitor.getEstrutura());
 				}
 
 				Integer numeroTuplas = estruturas.get(0).getNumeroTuplas();
@@ -712,15 +717,22 @@ public class TelaPrincipal extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 
-				Leitor leitor = new Leitor();
+				BufferedLeitor bfLeitor = null;
 
 				List<EstruturaArquivo> estruturas = new ArrayList<EstruturaArquivo>();
 
 				for (int i = 0; i < modeloListaArquivo.size(); i++) {
 
-					estruturas.add(leitor
-							.obterEstruturaArquivo(modeloListaArquivo.get(i)
-									.getFile()));
+					try {
+
+						bfLeitor = new BufferedLeitor(modeloListaArquivo.get(i)
+								.getFile());
+						
+					} catch (Exception er) {
+						er.printStackTrace();
+					}
+
+					estruturas.add(bfLeitor.getEstrutura());
 				}
 
 				Integer numeroDimensoes = estruturas.get(0).getDimensoes()
